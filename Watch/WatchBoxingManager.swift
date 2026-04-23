@@ -187,9 +187,7 @@ final class WatchBoxingManager: NSObject, ObservableObject {
 
         let safeLabel = currentLabel.isEmpty ? "raw"
             : currentLabel.replacingOccurrences(of: " ", with: "_")
-        let fmt = DateFormatter()
-        fmt.dateFormat = "yyyyMMdd_HHmmss"
-        let basename = "\(safeLabel)_Watch_\(fmt.string(from: Date())).csv"
+        let basename = "\(safeLabel)_Watch_\(FileUtils.dateStamp()).csv"
 
         let url = FileManager.default.temporaryDirectory.appendingPathComponent(basename)
         do {

@@ -33,7 +33,7 @@ final class SavedFilesManager: ObservableObject {
     // MARK: - Public
 
     func refresh() {
-        let dir  = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let dir  = FileUtils.documentsURL
         let keys: [URLResourceKey] = [.fileSizeKey, .contentModificationDateKey]
 
         let urls = (try? FileManager.default.contentsOfDirectory(

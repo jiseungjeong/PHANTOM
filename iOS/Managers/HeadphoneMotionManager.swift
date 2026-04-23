@@ -1,6 +1,5 @@
 import Foundation
 import CoreMotion
-import AVFoundation
 
 // MARK: - Headphone Motion Manager
 //
@@ -38,12 +37,7 @@ final class HeadphoneMotionManager: ObservableObject {
     func startTracking(anchorTs: TimeInterval) {
         guard !isActive else { return }
 
-        // Activate the audio session so CMHeadphoneMotionManager can establish the
-        // Bluetooth route.  This is required on all supported AirPods models.
-        let audioSession = AVAudioSession.sharedInstance()
-        try? audioSession.setCategory(.playback, mode: .default,
-                                      options: [.allowBluetoothHFP, .allowBluetoothA2DP])
-        try? audioSession.setActive(true)
+        AudioSessionActivator.activateForHeadphoneMotion()
 
         headphoneMotion.startDeviceMotionUpdates(to: .main) { [weak self] motion, error in
             guard let self else { return }

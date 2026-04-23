@@ -22,15 +22,11 @@ final class WorkoutHistoryManager: ObservableObject {
     private var midnightTimer: Timer?
 
     private var granularURL: URL {
-        FileManager.default
-            .urls(for: .documentDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("workout_granular.json")
+        FileUtils.documentsURL.appendingPathComponent("workout_granular.json")
     }
 
     private var summariesURL: URL {
-        FileManager.default
-            .urls(for: .documentDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("workout_summaries.json")
+        FileUtils.documentsURL.appendingPathComponent("workout_summaries.json")
     }
 
     // MARK: - Init

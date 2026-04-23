@@ -1,7 +1,6 @@
 import Foundation
 import CoreMotion
 import Combine
-import AVFoundation
 
 // MARK: - Time Series Collect Manager  (HARAPP-compatible)
 //
@@ -129,9 +128,7 @@ final class TimeSeriesCollectManager: ObservableObject {
     @discardableResult
     func saveCSV(source: ExportSource = .all) throws -> URL {
         let samples = samplesFor(source)
-        let url = documentsURL.appendingPathComponent(
-            "\(selectedLabel)_\(source == .all ? "" : "\(source.rawValue)_")\(dateStamp()).csv"
-        )
+        let url = FileUtils.documentsURL.appendingPathComponent(exportFilename(source, ext: "csv"))
         try samples.csvString().write(to: url, atomically: true, encoding: .utf8)
         return url
     }
@@ -141,11 +138,14 @@ final class TimeSeriesCollectManager: ObservableObject {
         let samples = samplesFor(source)
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-        let url = documentsURL.appendingPathComponent(
-            "\(selectedLabel)_\(source == .all ? "" : "\(source.rawValue)_")\(dateStamp()).json"
-        )
+        let url = FileUtils.documentsURL.appendingPathComponent(exportFilename(source, ext: "json"))
         try encoder.encode(samples).write(to: url)
         return url
+    }
+
+    private func exportFilename(_ source: ExportSource, ext: String) -> String {
+        let srcSegment = source == .all ? "" : "\(source.rawValue)_"
+        return "\(selectedLabel)_\(srcSegment)\(FileUtils.dateStamp()).\(ext)"
     }
 
     // MARK: - Live Buffers for Charts (last 200 samples per device)
@@ -203,20 +203,7 @@ final class TimeSeriesCollectManager: ObservableObject {
     // MARK: - Private — AirPods Stream
 
     private func startAirPodsStream() {
-        // CMHeadphoneMotionManager requires the AirPods to be the active AVAudioSession
-        // route before it delivers any updates — this applies to AirPods Pro, AirPods Max,
-        // AirPods 3rd gen, and AirPods 4 (with ANC).  Without activating the session here
-        // the callback fires zero samples and sets no error, making it look like the
-        // device isn't connected.
-        let session = AVAudioSession.sharedInstance()
-        do {
-            try session.setCategory(.playback, mode: .default,
-                                    options: [.allowBluetoothHFP, .allowBluetoothA2DP])
-            try session.setActive(true)
-            print("[TimeSeries] AVAudioSession activated for AirPods route")
-        } catch {
-            print("[TimeSeries] AVAudioSession error: \(error.localizedDescription)")
-        }
+        AudioSessionActivator.activateForHeadphoneMotion()
 
         // Do NOT gate on isDeviceMotionAvailable — it can return false even when AirPods
         // are worn because the BT handshake or privacy auth may not have completed yet.
@@ -341,13 +328,4 @@ final class TimeSeriesCollectManager: ObservableObject {
         }
     }
 
-    private var documentsURL: URL {
-        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-    }
-
-    private func dateStamp() -> String {
-        let fmt = DateFormatter()
-        fmt.dateFormat = "yyyyMMdd_HHmmss"
-        return fmt.string(from: Date())
-    }
 }

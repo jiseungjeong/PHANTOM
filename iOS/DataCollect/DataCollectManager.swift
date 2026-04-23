@@ -1,6 +1,5 @@
 import Foundation
 import CoreMotion
-import AVFoundation
 
 // MARK: - Data Collect Manager
 //
@@ -93,14 +92,7 @@ final class DataCollectManager: ObservableObject {
             }
         }
 
-        // AirPods — activate AVAudioSession first so CMHeadphoneMotionManager can
-        // establish the Bluetooth route.  Required for AirPods Pro, AirPods Max,
-        // AirPods 3rd gen, and AirPods 4 (with ANC); without this the callback
-        // silently produces no updates even when the AirPods are worn.
-        let audioSession = AVAudioSession.sharedInstance()
-        try? audioSession.setCategory(.playback, mode: .default,
-                                      options: [.allowBluetoothHFP, .allowBluetoothA2DP])
-        try? audioSession.setActive(true)
+        AudioSessionActivator.activateForHeadphoneMotion()
 
         headphoneMotion.startDeviceMotionUpdates(to: .main) { [weak self] motion, error in
             guard let self else { return }
@@ -149,14 +141,16 @@ final class DataCollectManager: ObservableObject {
 
     @discardableResult
     func saveCSV() throws -> URL {
-        let url = documentsURL.appendingPathComponent("phantom_data_\(dateStamp()).csv")
+        let url = FileUtils.documentsURL
+            .appendingPathComponent("phantom_data_\(FileUtils.dateStamp()).csv")
         try csvString().write(to: url, atomically: true, encoding: .utf8)
         return url
     }
 
     @discardableResult
     func saveJSON() throws -> URL {
-        let url = documentsURL.appendingPathComponent("phantom_data_\(dateStamp()).json")
+        let url = FileUtils.documentsURL
+            .appendingPathComponent("phantom_data_\(FileUtils.dateStamp()).json")
         try jsonData().write(to: url)
         return url
     }
@@ -182,15 +176,5 @@ final class DataCollectManager: ObservableObject {
 
     private func record(label: String, source: String, window: [Double], tsMs: Double) {
         samples.append(DataCollectSample(label: label, source: source, window: window, tsMs: tsMs))
-    }
-
-    private var documentsURL: URL {
-        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-    }
-
-    private func dateStamp() -> String {
-        let fmt = DateFormatter()
-        fmt.dateFormat = "yyyyMMdd_HHmmss"
-        return fmt.string(from: Date())
     }
 }

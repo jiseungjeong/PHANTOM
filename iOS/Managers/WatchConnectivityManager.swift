@@ -161,8 +161,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
             return
         }
 
-        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        let dest = docs.appendingPathComponent(basename)
+        let dest = FileUtils.documentsURL.appendingPathComponent(basename)
 
         do {
             if FileManager.default.fileExists(atPath: dest.path) {
