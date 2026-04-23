@@ -1,9 +1,12 @@
+# macOS
 .DS_Store
-**/ .DS_Store
+**/.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
 
-# Xcode
+# Xcode — user-specific
 xcuserdata/
-DerivedData/
 *.xccheckout
 *.moved-aside
 *.pbxuser
@@ -14,9 +17,38 @@ DerivedData/
 !default.mode2v3
 *.perspectivev3
 !default.perspectivev3
+
+# Xcode — build
+DerivedData/
 build/
 *.o
 *.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
 
 # Swift Package Manager
 .swiftpm/xcode/
+.build/
+Packages/
+Package.resolved
+
+# CocoaPods (not used, but safe)
+Pods/
+
+# Python (for analyze_airpods.py etc.)
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# PHANTOM app-generated runtime files (when pulled from device)
+*.tmp.csv
+
+# IDE / editor
+.idea/
+.vscode/
+*.swp
+*.swo
