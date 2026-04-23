@@ -1,0 +1,66 @@
+name: BoxingTracker
+options:
+  deploymentTarget:
+    iOS: "16.0"
+    watchOS: "9.0"
+  xcodeVersion: "15"
+  bundleIdPrefix: com.boxingtracker
+
+targets:
+  BoxingTracker:
+    type: application
+    platform: iOS
+    deploymentTarget: "16.0"
+    sources:
+      - path: iOS
+      - path: Shared
+    dependencies:
+      - target: BoxingTrackerWatch
+        embed: true
+        link: false
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.boxingtracker.app
+        INFOPLIST_FILE: iOS/Info.plist
+        DEVELOPMENT_TEAM: ""
+    info:
+      path: iOS/Info.plist
+      properties:
+        NSMotionUsageDescription: "PHANTOM uses iPhone motion to detect and classify rear-hand punches."
+        NSHeadphoneMotionUsageDescription: "PHANTOM uses AirPods Pro motion to detect defensive head gestures (slip, weave, pull back)."
+        UILaunchScreen:
+          UIColorName: ""
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+
+  BoxingTrackerWatch:
+    type: application
+    platform: watchOS
+    deploymentTarget: "9.0"
+    sources:
+      - path: Watch
+      - path: Shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.boxingtracker.app.watchkitapp
+        INFOPLIST_FILE: Watch/Info.plist
+        CODE_SIGN_ENTITLEMENTS: Watch/BoxingTrackerWatch.entitlements
+        DEVELOPMENT_TEAM: ""
+    info:
+      path: Watch/Info.plist
+      properties:
+        NSMotionUsageDescription: "PHANTOM uses Apple Watch motion to detect lead-hand punch spikes."
+        NSHealthShareUsageDescription: "PHANTOM starts a boxing workout session to keep wrist sensors streaming during training."
+        NSHealthUpdateUsageDescription: "PHANTOM starts a boxing workout session to keep wrist sensors streaming during training."
+        WKCompanionAppBundleIdentifier: com.boxingtracker.app
+        WKApplication: true
+        WKBackgroundModes:
+          - workout-processing

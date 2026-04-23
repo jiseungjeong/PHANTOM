@@ -1,0 +1,553 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		02232BF32518D6109FA952D6 /* WorkoutHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86D052C8B42C88359C2E12BF /* WorkoutHistory.swift */; };
+		0948694015855EDECA17DCB6 /* TimeSeriesCollectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99EFAC3D10947EECA4425EB2 /* TimeSeriesCollectView.swift */; };
+		0B09B749CC6F9ECB3DF49382 /* BoxingSessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DE2474A1D143B9080550C7A /* BoxingSessionManager.swift */; };
+		25F2CD273B273A087E0E9BAF /* PunchClassifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 133BB7CC507B355F40B23C83 /* PunchClassifier.swift */; };
+		264E0E3A2754A5FFA9295ED0 /* BoxingModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3447A9CE19B9C9465013A201 /* BoxingModels.swift */; };
+		2B2E6F8B9B0F1FC3A6979C09 /* WatchConnectivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36779C884302645AC46A2B57 /* WatchConnectivityManager.swift */; };
+		34808657EA98C7599FC1CF5A /* BoxingTrackerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 165E92A66402F5A1FEAAB132 /* BoxingTrackerApp.swift */; };
+		394A04012875D053BA332745 /* HeadphoneMotionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4BCFD1EA8A5CCD5C8B91D5A /* HeadphoneMotionManager.swift */; };
+		3E961CB9A2015F97A2798B4A /* FootworkAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6907AF5B27393F88AB6A0075 /* FootworkAnalyzer.swift */; };
+		48BABA2C56F6AAEFCC0E0E91 /* PunchClassifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 133BB7CC507B355F40B23C83 /* PunchClassifier.swift */; };
+		5385A071930057F6EF8E2B48 /* SavedFilesManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A362332D5B5736C1C306498 /* SavedFilesManager.swift */; };
+		5A7F71B4620E09161DEFAEB2 /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09C42C383DA0C7827A48509F /* HistoryView.swift */; };
+		629D97C580D005202EAC0939 /* BoxingModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3447A9CE19B9C9465013A201 /* BoxingModels.swift */; };
+		6A7CC8CFF0F7EE130F3694A8 /* StatsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A90391C7A2F44D883C5BCA1 /* StatsView.swift */; };
+		73A9B14FC29E94BB4C49E7A8 /* DataCollectManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30A1FD564A651FC0C014EFD8 /* DataCollectManager.swift */; };
+		76C8DB4F7094A91A5E33952D /* TimeSeriesRawSample.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4E81175C275F196BBF71A02 /* TimeSeriesRawSample.swift */; };
+		7D04AE1EAFAB532421E970FE /* PhoneMotionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E411ACE81A03C4EC4A0B0C6 /* PhoneMotionManager.swift */; };
+		96CBD62DB8B045C25A7D51D9 /* PHANTOMFusionEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12F37F8E6816F11D5FC40D51 /* PHANTOMFusionEngine.swift */; };
+		9838694130818A61B7C4A9D2 /* WatchBoxingManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66DDB687AB81DAD867AB1513 /* WatchBoxingManager.swift */; };
+		991E1BF9F2ED00145B633257 /* TimeSeriesCollectManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2CD20E602C2542E22601425 /* TimeSeriesCollectManager.swift */; };
+		9C062E30C7075831D0781F9C /* BoxingTrackerWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 1F740001881A838F03445678 /* BoxingTrackerWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		9D15D41385EA88309C4185CB /* WatchBoxingApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D4CF6AED9005052412858F1 /* WatchBoxingApp.swift */; };
+		9FCDC2744060E5FCBDD048D1 /* WatchContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C9128422E700836E9A64D19 /* WatchContentView.swift */; };
+		C43D628483934943CB73676C /* DataCollectSample.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25A4AC8EFCF8051C9D5D3D6C /* DataCollectSample.swift */; };
+		CA49BC51FC4D52A587844EEB /* SessionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CD992594DCD227730CF0B1E /* SessionView.swift */; };
+		CF9F5A92559195415364F9C5 /* WorkoutHistoryManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FCFD0BD42B770880F5E9235 /* WorkoutHistoryManager.swift */; };
+		E4AF7E81A182B7577D323557 /* FootworkAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6907AF5B27393F88AB6A0075 /* FootworkAnalyzer.swift */; };
+		ED80935409BDEAF27C98AC07 /* FilesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBD6AA7EF45122D8943A6405 /* FilesView.swift */; };
+		F05FE98480F6CD1965CBAD4F /* DataCollectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 924F8D6885D5E3DA9078EFA2 /* DataCollectView.swift */; };
+		FC46F77FCE3B30A15230278D /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B8B1AF383650A50F8390367 /* ContentView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		D9FEA6912B1446389614DB5F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 8313C2DF07B8513B2CA3C0F2 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 25CDF2380C9C34930394F2C9;
+			remoteInfo = BoxingTrackerWatch;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		181DD609DD42E776018468D1 /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				9C062E30C7075831D0781F9C /* BoxingTrackerWatch.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		06BCBC36C278C9379DEC0E69 /* BoxingTracker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BoxingTracker.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		09C42C383DA0C7827A48509F /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
+		0CD992594DCD227730CF0B1E /* SessionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionView.swift; sourceTree = "<group>"; };
+		12F37F8E6816F11D5FC40D51 /* PHANTOMFusionEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PHANTOMFusionEngine.swift; sourceTree = "<group>"; };
+		133BB7CC507B355F40B23C83 /* PunchClassifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PunchClassifier.swift; sourceTree = "<group>"; };
+		165E92A66402F5A1FEAAB132 /* BoxingTrackerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoxingTrackerApp.swift; sourceTree = "<group>"; };
+		1F740001881A838F03445678 /* BoxingTrackerWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BoxingTrackerWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		25A4AC8EFCF8051C9D5D3D6C /* DataCollectSample.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataCollectSample.swift; sourceTree = "<group>"; };
+		2DE2474A1D143B9080550C7A /* BoxingSessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoxingSessionManager.swift; sourceTree = "<group>"; };
+		2E411ACE81A03C4EC4A0B0C6 /* PhoneMotionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhoneMotionManager.swift; sourceTree = "<group>"; };
+		2FCFD0BD42B770880F5E9235 /* WorkoutHistoryManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutHistoryManager.swift; sourceTree = "<group>"; };
+		30A1FD564A651FC0C014EFD8 /* DataCollectManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataCollectManager.swift; sourceTree = "<group>"; };
+		3447A9CE19B9C9465013A201 /* BoxingModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoxingModels.swift; sourceTree = "<group>"; };
+		36779C884302645AC46A2B57 /* WatchConnectivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchConnectivityManager.swift; sourceTree = "<group>"; };
+		4B8B1AF383650A50F8390367 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		593EB84B03708E0163AE78BA /* BoxingTrackerWatch.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = BoxingTrackerWatch.entitlements; sourceTree = "<group>"; };
+		5A90391C7A2F44D883C5BCA1 /* StatsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatsView.swift; sourceTree = "<group>"; };
+		66DDB687AB81DAD867AB1513 /* WatchBoxingManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchBoxingManager.swift; sourceTree = "<group>"; };
+		6907AF5B27393F88AB6A0075 /* FootworkAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FootworkAnalyzer.swift; sourceTree = "<group>"; };
+		6A24CA97C016BF82B59279C7 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		86D052C8B42C88359C2E12BF /* WorkoutHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutHistory.swift; sourceTree = "<group>"; };
+		924F8D6885D5E3DA9078EFA2 /* DataCollectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataCollectView.swift; sourceTree = "<group>"; };
+		99EFAC3D10947EECA4425EB2 /* TimeSeriesCollectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeSeriesCollectView.swift; sourceTree = "<group>"; };
+		9A362332D5B5736C1C306498 /* SavedFilesManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedFilesManager.swift; sourceTree = "<group>"; };
+		9C9128422E700836E9A64D19 /* WatchContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchContentView.swift; sourceTree = "<group>"; };
+		9D4CF6AED9005052412858F1 /* WatchBoxingApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchBoxingApp.swift; sourceTree = "<group>"; };
+		B2CD20E602C2542E22601425 /* TimeSeriesCollectManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeSeriesCollectManager.swift; sourceTree = "<group>"; };
+		BBD6AA7EF45122D8943A6405 /* FilesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilesView.swift; sourceTree = "<group>"; };
+		CB40E634B0A1FBDECB06691A /* BoxingTracker.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = BoxingTracker.entitlements; sourceTree = "<group>"; };
+		D4BCFD1EA8A5CCD5C8B91D5A /* HeadphoneMotionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeadphoneMotionManager.swift; sourceTree = "<group>"; };
+		F4E81175C275F196BBF71A02 /* TimeSeriesRawSample.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeSeriesRawSample.swift; sourceTree = "<group>"; };
+		F739EA6B92A33EAB9FC098A3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		09A6692F58A4592418522EF9 /* Watch */ = {
+			isa = PBXGroup;
+			children = (
+				593EB84B03708E0163AE78BA /* BoxingTrackerWatch.entitlements */,
+				F739EA6B92A33EAB9FC098A3 /* Info.plist */,
+				9D4CF6AED9005052412858F1 /* WatchBoxingApp.swift */,
+				66DDB687AB81DAD867AB1513 /* WatchBoxingManager.swift */,
+				9C9128422E700836E9A64D19 /* WatchContentView.swift */,
+			);
+			path = Watch;
+			sourceTree = "<group>";
+		};
+		0BDF2FEE1DE9D2624C7A68D5 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				3447A9CE19B9C9465013A201 /* BoxingModels.swift */,
+				6907AF5B27393F88AB6A0075 /* FootworkAnalyzer.swift */,
+				133BB7CC507B355F40B23C83 /* PunchClassifier.swift */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		5E210CCCE4EE5C0A0AB90B08 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				09C42C383DA0C7827A48509F /* HistoryView.swift */,
+				0CD992594DCD227730CF0B1E /* SessionView.swift */,
+				5A90391C7A2F44D883C5BCA1 /* StatsView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		7222AAC12E78D8AAC4372011 /* Managers */ = {
+			isa = PBXGroup;
+			children = (
+				2DE2474A1D143B9080550C7A /* BoxingSessionManager.swift */,
+				D4BCFD1EA8A5CCD5C8B91D5A /* HeadphoneMotionManager.swift */,
+				12F37F8E6816F11D5FC40D51 /* PHANTOMFusionEngine.swift */,
+				2E411ACE81A03C4EC4A0B0C6 /* PhoneMotionManager.swift */,
+				36779C884302645AC46A2B57 /* WatchConnectivityManager.swift */,
+				2FCFD0BD42B770880F5E9235 /* WorkoutHistoryManager.swift */,
+			);
+			path = Managers;
+			sourceTree = "<group>";
+		};
+		9A9BF6CF0627077459A3BA33 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				06BCBC36C278C9379DEC0E69 /* BoxingTracker.app */,
+				1F740001881A838F03445678 /* BoxingTrackerWatch.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		9E96A4BECA0F75E5EE508038 /* iOS */ = {
+			isa = PBXGroup;
+			children = (
+				CB40E634B0A1FBDECB06691A /* BoxingTracker.entitlements */,
+				6A24CA97C016BF82B59279C7 /* Info.plist */,
+				FDA5DFE2A3F6B8658D15CE55 /* App */,
+				C0BAC473959A8FB661F24C55 /* DataCollect */,
+				7222AAC12E78D8AAC4372011 /* Managers */,
+				B34D315CA63FD69F5CF0643F /* Models */,
+				5E210CCCE4EE5C0A0AB90B08 /* Views */,
+			);
+			path = iOS;
+			sourceTree = "<group>";
+		};
+		B34D315CA63FD69F5CF0643F /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				86D052C8B42C88359C2E12BF /* WorkoutHistory.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		C0BAC473959A8FB661F24C55 /* DataCollect */ = {
+			isa = PBXGroup;
+			children = (
+				30A1FD564A651FC0C014EFD8 /* DataCollectManager.swift */,
+				25A4AC8EFCF8051C9D5D3D6C /* DataCollectSample.swift */,
+				924F8D6885D5E3DA9078EFA2 /* DataCollectView.swift */,
+				BBD6AA7EF45122D8943A6405 /* FilesView.swift */,
+				9A362332D5B5736C1C306498 /* SavedFilesManager.swift */,
+				B2CD20E602C2542E22601425 /* TimeSeriesCollectManager.swift */,
+				99EFAC3D10947EECA4425EB2 /* TimeSeriesCollectView.swift */,
+				F4E81175C275F196BBF71A02 /* TimeSeriesRawSample.swift */,
+			);
+			path = DataCollect;
+			sourceTree = "<group>";
+		};
+		FB631902A9AADCB7558DFE37 = {
+			isa = PBXGroup;
+			children = (
+				9E96A4BECA0F75E5EE508038 /* iOS */,
+				0BDF2FEE1DE9D2624C7A68D5 /* Shared */,
+				09A6692F58A4592418522EF9 /* Watch */,
+				9A9BF6CF0627077459A3BA33 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		FDA5DFE2A3F6B8658D15CE55 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				165E92A66402F5A1FEAAB132 /* BoxingTrackerApp.swift */,
+				4B8B1AF383650A50F8390367 /* ContentView.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		25CDF2380C9C34930394F2C9 /* BoxingTrackerWatch */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 3FAED1DB22F6C3ABCA98CF09 /* Build configuration list for PBXNativeTarget "BoxingTrackerWatch" */;
+			buildPhases = (
+				376F8AAF3CF7D1691FF71F4E /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = BoxingTrackerWatch;
+			packageProductDependencies = (
+			);
+			productName = BoxingTrackerWatch;
+			productReference = 1F740001881A838F03445678 /* BoxingTrackerWatch.app */;
+			productType = "com.apple.product-type.application";
+		};
+		4E7EFCA3B2C7C4AB15CE5F42 /* BoxingTracker */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = DF3C72D8CA3578A1B437DB2C /* Build configuration list for PBXNativeTarget "BoxingTracker" */;
+			buildPhases = (
+				575EF59CA5C6CB39E9DDC4B3 /* Sources */,
+				181DD609DD42E776018468D1 /* Embed Watch Content */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				F4E42940CE361461542FD0B9 /* PBXTargetDependency */,
+			);
+			name = BoxingTracker;
+			packageProductDependencies = (
+			);
+			productName = BoxingTracker;
+			productReference = 06BCBC36C278C9379DEC0E69 /* BoxingTracker.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		8313C2DF07B8513B2CA3C0F2 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1500;
+			};
+			buildConfigurationList = E5C19A4CC5068765B5E41E6A /* Build configuration list for PBXProject "BoxingTracker" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = FB631902A9AADCB7558DFE37;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 9A9BF6CF0627077459A3BA33 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				4E7EFCA3B2C7C4AB15CE5F42 /* BoxingTracker */,
+				25CDF2380C9C34930394F2C9 /* BoxingTrackerWatch */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		376F8AAF3CF7D1691FF71F4E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				629D97C580D005202EAC0939 /* BoxingModels.swift in Sources */,
+				3E961CB9A2015F97A2798B4A /* FootworkAnalyzer.swift in Sources */,
+				48BABA2C56F6AAEFCC0E0E91 /* PunchClassifier.swift in Sources */,
+				9D15D41385EA88309C4185CB /* WatchBoxingApp.swift in Sources */,
+				9838694130818A61B7C4A9D2 /* WatchBoxingManager.swift in Sources */,
+				9FCDC2744060E5FCBDD048D1 /* WatchContentView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		575EF59CA5C6CB39E9DDC4B3 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				264E0E3A2754A5FFA9295ED0 /* BoxingModels.swift in Sources */,
+				0B09B749CC6F9ECB3DF49382 /* BoxingSessionManager.swift in Sources */,
+				34808657EA98C7599FC1CF5A /* BoxingTrackerApp.swift in Sources */,
+				FC46F77FCE3B30A15230278D /* ContentView.swift in Sources */,
+				73A9B14FC29E94BB4C49E7A8 /* DataCollectManager.swift in Sources */,
+				C43D628483934943CB73676C /* DataCollectSample.swift in Sources */,
+				F05FE98480F6CD1965CBAD4F /* DataCollectView.swift in Sources */,
+				ED80935409BDEAF27C98AC07 /* FilesView.swift in Sources */,
+				E4AF7E81A182B7577D323557 /* FootworkAnalyzer.swift in Sources */,
+				394A04012875D053BA332745 /* HeadphoneMotionManager.swift in Sources */,
+				5A7F71B4620E09161DEFAEB2 /* HistoryView.swift in Sources */,
+				96CBD62DB8B045C25A7D51D9 /* PHANTOMFusionEngine.swift in Sources */,
+				7D04AE1EAFAB532421E970FE /* PhoneMotionManager.swift in Sources */,
+				25F2CD273B273A087E0E9BAF /* PunchClassifier.swift in Sources */,
+				5385A071930057F6EF8E2B48 /* SavedFilesManager.swift in Sources */,
+				CA49BC51FC4D52A587844EEB /* SessionView.swift in Sources */,
+				6A7CC8CFF0F7EE130F3694A8 /* StatsView.swift in Sources */,
+				991E1BF9F2ED00145B633257 /* TimeSeriesCollectManager.swift in Sources */,
+				0948694015855EDECA17DCB6 /* TimeSeriesCollectView.swift in Sources */,
+				76C8DB4F7094A91A5E33952D /* TimeSeriesRawSample.swift in Sources */,
+				2B2E6F8B9B0F1FC3A6979C09 /* WatchConnectivityManager.swift in Sources */,
+				02232BF32518D6109FA952D6 /* WorkoutHistory.swift in Sources */,
+				CF9F5A92559195415364F9C5 /* WorkoutHistoryManager.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		F4E42940CE361461542FD0B9 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 25CDF2380C9C34930394F2C9 /* BoxingTrackerWatch */;
+			targetProxy = D9FEA6912B1446389614DB5F /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		1BB650BA573C0EF437DC000A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+				WATCHOS_DEPLOYMENT_TARGET = 9.0;
+			};
+			name = Release;
+		};
+		52846C71DB70827EF1B4FD96 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = JH4THZUB7T;
+				INFOPLIST_FILE = iOS/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.jiseung.boxingtracker.app;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		54E2BEBA3743E05FF31DEF4D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				WATCHOS_DEPLOYMENT_TARGET = 9.0;
+			};
+			name = Debug;
+		};
+		7BED695F1C823AE6F951375D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = JH4THZUB7T;
+				INFOPLIST_FILE = iOS/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.jiseung.boxingtracker.app;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		99A7675FCA80F2ED4AC76299 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Watch/BoxingTrackerWatch.entitlements;
+				DEVELOPMENT_TEAM = JH4THZUB7T;
+				INFOPLIST_FILE = Watch/Info.plist;
+				PRODUCT_BUNDLE_IDENTIFIER = com.jiseung.boxingtracker.app.watchkitapp;
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 9.0;
+			};
+			name = Debug;
+		};
+		9D663B064463F071ECEBBFA0 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Watch/BoxingTrackerWatch.entitlements;
+				DEVELOPMENT_TEAM = JH4THZUB7T;
+				INFOPLIST_FILE = Watch/Info.plist;
+				PRODUCT_BUNDLE_IDENTIFIER = com.jiseung.boxingtracker.app.watchkitapp;
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 9.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		3FAED1DB22F6C3ABCA98CF09 /* Build configuration list for PBXNativeTarget "BoxingTrackerWatch" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				99A7675FCA80F2ED4AC76299 /* Debug */,
+				9D663B064463F071ECEBBFA0 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		DF3C72D8CA3578A1B437DB2C /* Build configuration list for PBXNativeTarget "BoxingTracker" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				7BED695F1C823AE6F951375D /* Debug */,
+				52846C71DB70827EF1B4FD96 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		E5C19A4CC5068765B5E41E6A /* Build configuration list for PBXProject "BoxingTracker" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				54E2BEBA3743E05FF31DEF4D /* Debug */,
+				1BB650BA573C0EF437DC000A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 8313C2DF07B8513B2CA3C0F2 /* Project object */;
+}
