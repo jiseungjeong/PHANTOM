@@ -8,34 +8,47 @@
 
 /* Begin PBXBuildFile section */
 		02232BF32518D6109FA952D6 /* WorkoutHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86D052C8B42C88359C2E12BF /* WorkoutHistory.swift */; };
+		07E5BAEEC96D6BF193617C28 /* LastEventBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB7911C9B307E4A8681CBF3B /* LastEventBadge.swift */; };
 		0948694015855EDECA17DCB6 /* TimeSeriesCollectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99EFAC3D10947EECA4425EB2 /* TimeSeriesCollectView.swift */; };
 		0B09B749CC6F9ECB3DF49382 /* BoxingSessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DE2474A1D143B9080550C7A /* BoxingSessionManager.swift */; };
-		25F2CD273B273A087E0E9BAF /* PunchClassifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 133BB7CC507B355F40B23C83 /* PunchClassifier.swift */; };
+		0F3108973F60356603532529 /* SpikeDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6A4624F2B230981476DB0E4 /* SpikeDetector.swift */; };
+		19E834D934ED353F0B68F32F /* FileUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CA5C5984787C4F567D8E16B /* FileUtils.swift */; };
 		264E0E3A2754A5FFA9295ED0 /* BoxingModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3447A9CE19B9C9465013A201 /* BoxingModels.swift */; };
 		2B2E6F8B9B0F1FC3A6979C09 /* WatchConnectivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36779C884302645AC46A2B57 /* WatchConnectivityManager.swift */; };
 		34808657EA98C7599FC1CF5A /* BoxingTrackerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 165E92A66402F5A1FEAAB132 /* BoxingTrackerApp.swift */; };
+		34AA06041C285E406E5CAFD4 /* WatchMessageKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = 127A8468E1F5FC91704F7A8A /* WatchMessageKey.swift */; };
 		394A04012875D053BA332745 /* HeadphoneMotionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4BCFD1EA8A5CCD5C8B91D5A /* HeadphoneMotionManager.swift */; };
-		3E961CB9A2015F97A2798B4A /* FootworkAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6907AF5B27393F88AB6A0075 /* FootworkAnalyzer.swift */; };
-		48BABA2C56F6AAEFCC0E0E91 /* PunchClassifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 133BB7CC507B355F40B23C83 /* PunchClassifier.swift */; };
+		50AE032713CD393BB744C905 /* SessionStartConfirmOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95847D388B4A62A3C54D35E8 /* SessionStartConfirmOverlay.swift */; };
 		5385A071930057F6EF8E2B48 /* SavedFilesManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A362332D5B5736C1C306498 /* SavedFilesManager.swift */; };
+		5A599B936CB0F0A9BDAA2DC6 /* HeadGestureClassifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AD16D2E1A63AF7300F7CAFB /* HeadGestureClassifier.swift */; };
 		5A7F71B4620E09161DEFAEB2 /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09C42C383DA0C7827A48509F /* HistoryView.swift */; };
 		629D97C580D005202EAC0939 /* BoxingModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3447A9CE19B9C9465013A201 /* BoxingModels.swift */; };
 		6A7CC8CFF0F7EE130F3694A8 /* StatsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A90391C7A2F44D883C5BCA1 /* StatsView.swift */; };
 		73A9B14FC29E94BB4C49E7A8 /* DataCollectManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30A1FD564A651FC0C014EFD8 /* DataCollectManager.swift */; };
 		76C8DB4F7094A91A5E33952D /* TimeSeriesRawSample.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4E81175C275F196BBF71A02 /* TimeSeriesRawSample.swift */; };
 		7D04AE1EAFAB532421E970FE /* PhoneMotionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E411ACE81A03C4EC4A0B0C6 /* PhoneMotionManager.swift */; };
+		8BD503430C7960732849815D /* ConnectionBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = A981092844965F0C0AE9F893 /* ConnectionBar.swift */; };
+		8F17201552746848FDCE6831 /* SessionToggleButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2305E24AB6D3993BC6E9C433 /* SessionToggleButton.swift */; };
 		96CBD62DB8B045C25A7D51D9 /* PHANTOMFusionEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12F37F8E6816F11D5FC40D51 /* PHANTOMFusionEngine.swift */; };
 		9838694130818A61B7C4A9D2 /* WatchBoxingManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66DDB687AB81DAD867AB1513 /* WatchBoxingManager.swift */; };
 		991E1BF9F2ED00145B633257 /* TimeSeriesCollectManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2CD20E602C2542E22601425 /* TimeSeriesCollectManager.swift */; };
 		9C062E30C7075831D0781F9C /* BoxingTrackerWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 1F740001881A838F03445678 /* BoxingTrackerWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		9D15D41385EA88309C4185CB /* WatchBoxingApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D4CF6AED9005052412858F1 /* WatchBoxingApp.swift */; };
 		9FCDC2744060E5FCBDD048D1 /* WatchContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C9128422E700836E9A64D19 /* WatchContentView.swift */; };
+		A845636D3087487257278E78 /* WatchMessageKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = 127A8468E1F5FC91704F7A8A /* WatchMessageKey.swift */; };
+		A9B5F7A83C38C8F227CFBFE1 /* ParsedCSV.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D1C52C71001A21073A38631 /* ParsedCSV.swift */; };
+		C000F92D1A009DCB73FEFDCF /* AudioSessionActivator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 075FFA23929E783BEEFA4A73 /* AudioSessionActivator.swift */; };
+		C2CCE3347A50798E7AE9F6D1 /* SafetyBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC398B10C74961C5B21DDD19 /* SafetyBanner.swift */; };
 		C43D628483934943CB73676C /* DataCollectSample.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25A4AC8EFCF8051C9D5D3D6C /* DataCollectSample.swift */; };
 		CA49BC51FC4D52A587844EEB /* SessionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CD992594DCD227730CF0B1E /* SessionView.swift */; };
+		CA945D0E675196B605CB166B /* FileUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CA5C5984787C4F567D8E16B /* FileUtils.swift */; };
+		CCCDB074F73A5AAC2F049447 /* SpikeDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6A4624F2B230981476DB0E4 /* SpikeDetector.swift */; };
 		CF9F5A92559195415364F9C5 /* WorkoutHistoryManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FCFD0BD42B770880F5E9235 /* WorkoutHistoryManager.swift */; };
-		E4AF7E81A182B7577D323557 /* FootworkAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6907AF5B27393F88AB6A0075 /* FootworkAnalyzer.swift */; };
+		DE9FE4BF8264BE52619E73A4 /* HeadGestureClassifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AD16D2E1A63AF7300F7CAFB /* HeadGestureClassifier.swift */; };
 		ED80935409BDEAF27C98AC07 /* FilesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBD6AA7EF45122D8943A6405 /* FilesView.swift */; };
 		F05FE98480F6CD1965CBAD4F /* DataCollectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 924F8D6885D5E3DA9078EFA2 /* DataCollectView.swift */; };
+		F3A8CBC32425156D76314E15 /* MetricCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AB382D43DEA16BA4258E196 /* MetricCard.swift */; };
+		F57F36C0871B4D2468E0AE56 /* TransitionTimeCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09A12A3FD93808A9D1A46BCA /* TransitionTimeCard.swift */; };
 		FC46F77FCE3B30A15230278D /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B8B1AF383650A50F8390367 /* ContentView.swift */; };
 /* End PBXBuildFile section */
 
@@ -65,12 +78,16 @@
 
 /* Begin PBXFileReference section */
 		06BCBC36C278C9379DEC0E69 /* BoxingTracker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BoxingTracker.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		075FFA23929E783BEEFA4A73 /* AudioSessionActivator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioSessionActivator.swift; sourceTree = "<group>"; };
+		09A12A3FD93808A9D1A46BCA /* TransitionTimeCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransitionTimeCard.swift; sourceTree = "<group>"; };
 		09C42C383DA0C7827A48509F /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
 		0CD992594DCD227730CF0B1E /* SessionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionView.swift; sourceTree = "<group>"; };
+		127A8468E1F5FC91704F7A8A /* WatchMessageKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchMessageKey.swift; sourceTree = "<group>"; };
 		12F37F8E6816F11D5FC40D51 /* PHANTOMFusionEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PHANTOMFusionEngine.swift; sourceTree = "<group>"; };
-		133BB7CC507B355F40B23C83 /* PunchClassifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PunchClassifier.swift; sourceTree = "<group>"; };
 		165E92A66402F5A1FEAAB132 /* BoxingTrackerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoxingTrackerApp.swift; sourceTree = "<group>"; };
+		1D1C52C71001A21073A38631 /* ParsedCSV.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParsedCSV.swift; sourceTree = "<group>"; };
 		1F740001881A838F03445678 /* BoxingTrackerWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BoxingTrackerWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		2305E24AB6D3993BC6E9C433 /* SessionToggleButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionToggleButton.swift; sourceTree = "<group>"; };
 		25A4AC8EFCF8051C9D5D3D6C /* DataCollectSample.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataCollectSample.swift; sourceTree = "<group>"; };
 		2DE2474A1D143B9080550C7A /* BoxingSessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoxingSessionManager.swift; sourceTree = "<group>"; };
 		2E411ACE81A03C4EC4A0B0C6 /* PhoneMotionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhoneMotionManager.swift; sourceTree = "<group>"; };
@@ -82,20 +99,27 @@
 		593EB84B03708E0163AE78BA /* BoxingTrackerWatch.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = BoxingTrackerWatch.entitlements; sourceTree = "<group>"; };
 		5A90391C7A2F44D883C5BCA1 /* StatsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatsView.swift; sourceTree = "<group>"; };
 		66DDB687AB81DAD867AB1513 /* WatchBoxingManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchBoxingManager.swift; sourceTree = "<group>"; };
-		6907AF5B27393F88AB6A0075 /* FootworkAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FootworkAnalyzer.swift; sourceTree = "<group>"; };
 		6A24CA97C016BF82B59279C7 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		7AD16D2E1A63AF7300F7CAFB /* HeadGestureClassifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeadGestureClassifier.swift; sourceTree = "<group>"; };
+		7CA5C5984787C4F567D8E16B /* FileUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileUtils.swift; sourceTree = "<group>"; };
 		86D052C8B42C88359C2E12BF /* WorkoutHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutHistory.swift; sourceTree = "<group>"; };
 		924F8D6885D5E3DA9078EFA2 /* DataCollectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataCollectView.swift; sourceTree = "<group>"; };
+		95847D388B4A62A3C54D35E8 /* SessionStartConfirmOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStartConfirmOverlay.swift; sourceTree = "<group>"; };
 		99EFAC3D10947EECA4425EB2 /* TimeSeriesCollectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeSeriesCollectView.swift; sourceTree = "<group>"; };
 		9A362332D5B5736C1C306498 /* SavedFilesManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedFilesManager.swift; sourceTree = "<group>"; };
+		9AB382D43DEA16BA4258E196 /* MetricCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetricCard.swift; sourceTree = "<group>"; };
 		9C9128422E700836E9A64D19 /* WatchContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchContentView.swift; sourceTree = "<group>"; };
 		9D4CF6AED9005052412858F1 /* WatchBoxingApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchBoxingApp.swift; sourceTree = "<group>"; };
+		A981092844965F0C0AE9F893 /* ConnectionBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionBar.swift; sourceTree = "<group>"; };
+		AB7911C9B307E4A8681CBF3B /* LastEventBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LastEventBadge.swift; sourceTree = "<group>"; };
 		B2CD20E602C2542E22601425 /* TimeSeriesCollectManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeSeriesCollectManager.swift; sourceTree = "<group>"; };
 		BBD6AA7EF45122D8943A6405 /* FilesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilesView.swift; sourceTree = "<group>"; };
 		CB40E634B0A1FBDECB06691A /* BoxingTracker.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = BoxingTracker.entitlements; sourceTree = "<group>"; };
 		D4BCFD1EA8A5CCD5C8B91D5A /* HeadphoneMotionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeadphoneMotionManager.swift; sourceTree = "<group>"; };
+		E6A4624F2B230981476DB0E4 /* SpikeDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpikeDetector.swift; sourceTree = "<group>"; };
 		F4E81175C275F196BBF71A02 /* TimeSeriesRawSample.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeSeriesRawSample.swift; sourceTree = "<group>"; };
 		F739EA6B92A33EAB9FC098A3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		FC398B10C74961C5B21DDD19 /* SafetyBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SafetyBanner.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -115,8 +139,10 @@
 			isa = PBXGroup;
 			children = (
 				3447A9CE19B9C9465013A201 /* BoxingModels.swift */,
-				6907AF5B27393F88AB6A0075 /* FootworkAnalyzer.swift */,
-				133BB7CC507B355F40B23C83 /* PunchClassifier.swift */,
+				7CA5C5984787C4F567D8E16B /* FileUtils.swift */,
+				7AD16D2E1A63AF7300F7CAFB /* HeadGestureClassifier.swift */,
+				E6A4624F2B230981476DB0E4 /* SpikeDetector.swift */,
+				127A8468E1F5FC91704F7A8A /* WatchMessageKey.swift */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -127,6 +153,7 @@
 				09C42C383DA0C7827A48509F /* HistoryView.swift */,
 				0CD992594DCD227730CF0B1E /* SessionView.swift */,
 				5A90391C7A2F44D883C5BCA1 /* StatsView.swift */,
+				C7FB7A6FF1BA6331E590328D /* Session */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -134,6 +161,7 @@
 		7222AAC12E78D8AAC4372011 /* Managers */ = {
 			isa = PBXGroup;
 			children = (
+				075FFA23929E783BEEFA4A73 /* AudioSessionActivator.swift */,
 				2DE2474A1D143B9080550C7A /* BoxingSessionManager.swift */,
 				D4BCFD1EA8A5CCD5C8B91D5A /* HeadphoneMotionManager.swift */,
 				12F37F8E6816F11D5FC40D51 /* PHANTOMFusionEngine.swift */,
@@ -182,12 +210,27 @@
 				25A4AC8EFCF8051C9D5D3D6C /* DataCollectSample.swift */,
 				924F8D6885D5E3DA9078EFA2 /* DataCollectView.swift */,
 				BBD6AA7EF45122D8943A6405 /* FilesView.swift */,
+				1D1C52C71001A21073A38631 /* ParsedCSV.swift */,
 				9A362332D5B5736C1C306498 /* SavedFilesManager.swift */,
 				B2CD20E602C2542E22601425 /* TimeSeriesCollectManager.swift */,
 				99EFAC3D10947EECA4425EB2 /* TimeSeriesCollectView.swift */,
 				F4E81175C275F196BBF71A02 /* TimeSeriesRawSample.swift */,
 			);
 			path = DataCollect;
+			sourceTree = "<group>";
+		};
+		C7FB7A6FF1BA6331E590328D /* Session */ = {
+			isa = PBXGroup;
+			children = (
+				A981092844965F0C0AE9F893 /* ConnectionBar.swift */,
+				AB7911C9B307E4A8681CBF3B /* LastEventBadge.swift */,
+				9AB382D43DEA16BA4258E196 /* MetricCard.swift */,
+				FC398B10C74961C5B21DDD19 /* SafetyBanner.swift */,
+				95847D388B4A62A3C54D35E8 /* SessionStartConfirmOverlay.swift */,
+				2305E24AB6D3993BC6E9C433 /* SessionToggleButton.swift */,
+				09A12A3FD93808A9D1A46BCA /* TransitionTimeCard.swift */,
+			);
+			path = Session;
 			sourceTree = "<group>";
 		};
 		FB631902A9AADCB7558DFE37 = {
@@ -256,6 +299,14 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					25CDF2380C9C34930394F2C9 = {
+						ProvisioningStyle = Automatic;
+					};
+					4E7EFCA3B2C7C4AB15CE5F42 = {
+						ProvisioningStyle = Automatic;
+					};
+				};
 			};
 			buildConfigurationList = E5C19A4CC5068765B5E41E6A /* Build configuration list for PBXProject "BoxingTracker" */;
 			developmentRegion = en;
@@ -283,11 +334,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				629D97C580D005202EAC0939 /* BoxingModels.swift in Sources */,
-				3E961CB9A2015F97A2798B4A /* FootworkAnalyzer.swift in Sources */,
-				48BABA2C56F6AAEFCC0E0E91 /* PunchClassifier.swift in Sources */,
+				CA945D0E675196B605CB166B /* FileUtils.swift in Sources */,
+				DE9FE4BF8264BE52619E73A4 /* HeadGestureClassifier.swift in Sources */,
+				CCCDB074F73A5AAC2F049447 /* SpikeDetector.swift in Sources */,
 				9D15D41385EA88309C4185CB /* WatchBoxingApp.swift in Sources */,
 				9838694130818A61B7C4A9D2 /* WatchBoxingManager.swift in Sources */,
 				9FCDC2744060E5FCBDD048D1 /* WatchContentView.swift in Sources */,
+				A845636D3087487257278E78 /* WatchMessageKey.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -295,27 +348,38 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C000F92D1A009DCB73FEFDCF /* AudioSessionActivator.swift in Sources */,
 				264E0E3A2754A5FFA9295ED0 /* BoxingModels.swift in Sources */,
 				0B09B749CC6F9ECB3DF49382 /* BoxingSessionManager.swift in Sources */,
 				34808657EA98C7599FC1CF5A /* BoxingTrackerApp.swift in Sources */,
+				8BD503430C7960732849815D /* ConnectionBar.swift in Sources */,
 				FC46F77FCE3B30A15230278D /* ContentView.swift in Sources */,
 				73A9B14FC29E94BB4C49E7A8 /* DataCollectManager.swift in Sources */,
 				C43D628483934943CB73676C /* DataCollectSample.swift in Sources */,
 				F05FE98480F6CD1965CBAD4F /* DataCollectView.swift in Sources */,
+				19E834D934ED353F0B68F32F /* FileUtils.swift in Sources */,
 				ED80935409BDEAF27C98AC07 /* FilesView.swift in Sources */,
-				E4AF7E81A182B7577D323557 /* FootworkAnalyzer.swift in Sources */,
+				5A599B936CB0F0A9BDAA2DC6 /* HeadGestureClassifier.swift in Sources */,
 				394A04012875D053BA332745 /* HeadphoneMotionManager.swift in Sources */,
 				5A7F71B4620E09161DEFAEB2 /* HistoryView.swift in Sources */,
+				07E5BAEEC96D6BF193617C28 /* LastEventBadge.swift in Sources */,
+				F3A8CBC32425156D76314E15 /* MetricCard.swift in Sources */,
 				96CBD62DB8B045C25A7D51D9 /* PHANTOMFusionEngine.swift in Sources */,
+				A9B5F7A83C38C8F227CFBFE1 /* ParsedCSV.swift in Sources */,
 				7D04AE1EAFAB532421E970FE /* PhoneMotionManager.swift in Sources */,
-				25F2CD273B273A087E0E9BAF /* PunchClassifier.swift in Sources */,
+				C2CCE3347A50798E7AE9F6D1 /* SafetyBanner.swift in Sources */,
 				5385A071930057F6EF8E2B48 /* SavedFilesManager.swift in Sources */,
+				50AE032713CD393BB744C905 /* SessionStartConfirmOverlay.swift in Sources */,
+				8F17201552746848FDCE6831 /* SessionToggleButton.swift in Sources */,
 				CA49BC51FC4D52A587844EEB /* SessionView.swift in Sources */,
+				0F3108973F60356603532529 /* SpikeDetector.swift in Sources */,
 				6A7CC8CFF0F7EE130F3694A8 /* StatsView.swift in Sources */,
 				991E1BF9F2ED00145B633257 /* TimeSeriesCollectManager.swift in Sources */,
 				0948694015855EDECA17DCB6 /* TimeSeriesCollectView.swift in Sources */,
 				76C8DB4F7094A91A5E33952D /* TimeSeriesRawSample.swift in Sources */,
+				F57F36C0871B4D2468E0AE56 /* TransitionTimeCard.swift in Sources */,
 				2B2E6F8B9B0F1FC3A6979C09 /* WatchConnectivityManager.swift in Sources */,
+				34AA06041C285E406E5CAFD4 /* WatchMessageKey.swift in Sources */,
 				02232BF32518D6109FA952D6 /* WorkoutHistory.swift in Sources */,
 				CF9F5A92559195415364F9C5 /* WorkoutHistoryManager.swift in Sources */,
 			);
@@ -365,8 +429,10 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = KD5JZF2BDW;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -393,6 +459,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = JH4THZUB7T;
 				INFOPLIST_FILE = iOS/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
@@ -400,7 +467,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.jiseung.boxingtracker.app;
+				PRODUCT_BUNDLE_IDENTIFIER = com.jiseungjeong.boxingtracker;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -439,8 +506,10 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = KD5JZF2BDW;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -474,6 +543,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = JH4THZUB7T;
 				INFOPLIST_FILE = iOS/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
@@ -481,7 +551,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.jiseung.boxingtracker.app;
+				PRODUCT_BUNDLE_IDENTIFIER = com.jiseungjeong.boxingtracker;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -492,9 +562,10 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Watch/BoxingTrackerWatch.entitlements;
+				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = JH4THZUB7T;
 				INFOPLIST_FILE = Watch/Info.plist;
-				PRODUCT_BUNDLE_IDENTIFIER = com.jiseung.boxingtracker.app.watchkitapp;
+				PRODUCT_BUNDLE_IDENTIFIER = com.jiseungjeong.boxingtracker.watchkitapp;
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
 				TARGETED_DEVICE_FAMILY = 4;
@@ -507,9 +578,10 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Watch/BoxingTrackerWatch.entitlements;
+				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = JH4THZUB7T;
 				INFOPLIST_FILE = Watch/Info.plist;
-				PRODUCT_BUNDLE_IDENTIFIER = com.jiseung.boxingtracker.app.watchkitapp;
+				PRODUCT_BUNDLE_IDENTIFIER = com.jiseungjeong.boxingtracker.watchkitapp;
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
 				TARGETED_DEVICE_FAMILY = 4;

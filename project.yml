@@ -4,7 +4,12 @@ options:
     iOS: "16.0"
     watchOS: "9.0"
   xcodeVersion: "15"
-  bundleIdPrefix: com.boxingtracker
+  bundleIdPrefix: com.jiseungjeong.boxingtracker
+
+settings:
+  base:
+    DEVELOPMENT_TEAM: KD5JZF2BDW
+    CODE_SIGN_STYLE: Automatic
 
 targets:
   BoxingTracker:
@@ -20,9 +25,10 @@ targets:
         link: false
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.boxingtracker.app
+        PRODUCT_BUNDLE_IDENTIFIER: com.jiseungjeong.boxingtracker
         INFOPLIST_FILE: iOS/Info.plist
-        DEVELOPMENT_TEAM: ""
+        DEVELOPMENT_TEAM: KD5JZF2BDW
+        CODE_SIGN_STYLE: Automatic
     info:
       path: iOS/Info.plist
       properties:
@@ -50,17 +56,18 @@ targets:
       - path: Shared
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.boxingtracker.app.watchkitapp
+        PRODUCT_BUNDLE_IDENTIFIER: com.jiseungjeong.boxingtracker.watchkitapp
         INFOPLIST_FILE: Watch/Info.plist
         CODE_SIGN_ENTITLEMENTS: Watch/BoxingTrackerWatch.entitlements
-        DEVELOPMENT_TEAM: ""
+        DEVELOPMENT_TEAM: KD5JZF2BDW
+        CODE_SIGN_STYLE: Automatic
     info:
       path: Watch/Info.plist
       properties:
         NSMotionUsageDescription: "PHANTOM uses Apple Watch motion to detect lead-hand punch spikes."
         NSHealthShareUsageDescription: "PHANTOM starts a boxing workout session to keep wrist sensors streaming during training."
         NSHealthUpdateUsageDescription: "PHANTOM starts a boxing workout session to keep wrist sensors streaming during training."
-        WKCompanionAppBundleIdentifier: com.boxingtracker.app
+        WKCompanionAppBundleIdentifier: com.jiseungjeong.boxingtracker
         WKApplication: true
         WKBackgroundModes:
           - workout-processing
