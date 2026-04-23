@@ -58,6 +58,14 @@ final class WatchBoxingManager: NSObject, ObservableObject {
     private var workoutSession: HKWorkoutSession?
     private var workoutBuilder: HKLiveWorkoutBuilder?
 
+    // MARK: - Persistence keys
+
+    private enum PersistKey {
+        static let sessionActive = "phantom.watch.sessionActive"
+        static let anchorTs      = "phantom.watch.anchorTs"
+        static let spikeCount    = "phantom.watch.spikeCount"
+    }
+
     // MARK: - Init
 
     override init() {
@@ -67,20 +75,38 @@ final class WatchBoxingManager: NSObject, ObservableObject {
         detector.onSpike = { [weak self] window, tsMs in
             guard let self else { return }
             self.spikeCount += 1
+            UserDefaults.standard.set(self.spikeCount, forKey: PersistKey.spikeCount)
             WKInterfaceDevice.current().play(.click)
             self.sendSpikeToPhone(window: window, tsMs: tsMs)
         }
+
+        restoreSessionIfNeeded()
+    }
+
+    /// If the app was killed while a session was active, resume it automatically
+    /// using the persisted anchor timestamp and spike counter so the user lands
+    /// back in a live session instead of a blank screen.
+    private func restoreSessionIfNeeded() {
+        let ud = UserDefaults.standard
+        guard ud.bool(forKey: PersistKey.sessionActive) else { return }
+        let persistedAnchor = ud.double(forKey: PersistKey.anchorTs)
+        guard persistedAnchor > 0 else { return }
+
+        spikeCount = ud.integer(forKey: PersistKey.spikeCount)
+        startSession(anchorTs: persistedAnchor, notifyPhone: false, resuming: true)
     }
 
     // MARK: - Session Control
 
-    func startSession(anchorTs: TimeInterval, notifyPhone: Bool = false) {
+    func startSession(anchorTs: TimeInterval,
+                      notifyPhone: Bool = false,
+                      resuming: Bool = false) {
         self.anchorTs = anchorTs
         guard !isSessionActive, motionManager.isDeviceMotionAvailable else { return }
 
         beginWorkoutKeepAlive()
 
-        spikeCount = 0
+        if !resuming { spikeCount = 0 }
         motionManager.deviceMotionUpdateInterval = updateInterval
         motionManager.startDeviceMotionUpdates(to: .main) { [weak self] motion, _ in
             guard let self, let motion else { return }
@@ -91,6 +117,11 @@ final class WatchBoxingManager: NSObject, ObservableObject {
             self.detector.processSample(magnitude: mag, tsMs: tsMs)
         }
         isSessionActive = true
+
+        let ud = UserDefaults.standard
+        ud.set(true,     forKey: PersistKey.sessionActive)
+        ud.set(anchorTs, forKey: PersistKey.anchorTs)
+        ud.set(spikeCount, forKey: PersistKey.spikeCount)
 
         if notifyPhone {
             sendToPhone([
@@ -106,6 +137,11 @@ final class WatchBoxingManager: NSObject, ObservableObject {
         detector.reset()
         isSessionActive = false
         watchInitiatedSession = false
+
+        let ud = UserDefaults.standard
+        ud.set(false, forKey: PersistKey.sessionActive)
+        ud.removeObject(forKey: PersistKey.anchorTs)
+        ud.removeObject(forKey: PersistKey.spikeCount)
 
         endWorkoutKeepAliveIfIdle()
 
@@ -164,14 +200,23 @@ final class WatchBoxingManager: NSObject, ObservableObject {
         endWorkoutKeepAliveIfIdle()
     }
 
+    /// Live-preview flush. Best-effort only: if the phone is not reachable
+    /// (e.g. wrist down, screen off) we drop the batch instead of queueing it
+    /// via transferUserInfo. The authoritative full buffer is shipped via
+    /// transferFile at stop, so dropping live batches never loses data.
     private func flushRawBuffer() {
         guard !rawBuffer.isEmpty else { return }
         let payload = rawBuffer
         rawBuffer = []
-        sendToPhone([
-            WatchMessageKey.rawBatch:   true,
-            WatchMessageKey.rawSamples: payload
-        ])
+        guard WCSession.isSupported(), WCSession.default.isReachable else { return }
+        WCSession.default.sendMessage(
+            [WatchMessageKey.rawBatch: true,
+             WatchMessageKey.rawSamples: payload],
+            replyHandler: nil,
+            errorHandler: { error in
+                print("[Watch→Phone] live batch send error: \(error)")
+            }
+        )
     }
 
     // MARK: - Reliable raw delivery (transferFile)
@@ -236,7 +281,24 @@ final class WatchBoxingManager: NSObject, ObservableObject {
         guard HKHealthStore.isHealthDataAvailable() else { return }
 
         let typesToShare: Set = [HKObjectType.workoutType()]
-        healthStore.requestAuthorization(toShare: typesToShare, read: []) { _, _ in }
+        healthStore.requestAuthorization(toShare: typesToShare, read: []) { [weak self] granted, error in
+            Task { @MainActor in
+                guard let self else { return }
+                if let error {
+                    print("[Watch] HK auth error: \(error)")
+                }
+                guard granted else {
+                    print("[Watch] HK auth not granted — Watch will suspend when wrist drops")
+                    return
+                }
+                self.startWorkoutSessionNow()
+            }
+        }
+    }
+
+    @MainActor
+    private func startWorkoutSessionNow() {
+        guard workoutSession == nil else { return }
 
         let config = HKWorkoutConfiguration()
         config.activityType  = .boxing
@@ -254,8 +316,12 @@ final class WatchBoxingManager: NSObject, ObservableObject {
 
             let startDate = Date()
             session.startActivity(with: startDate)
-            builder.beginCollection(withStart: startDate) { _, _ in }
+            builder.beginCollection(withStart: startDate) { ok, err in
+                if let err { print("[Watch] beginCollection error: \(err)") }
+                if !ok   { print("[Watch] beginCollection returned not-ok") }
+            }
             isWorkoutActive = true
+            print("[Watch] HKWorkoutSession started — keep-alive active")
         } catch {
             print("[Watch] HKWorkoutSession start failed: \(error)")
             workoutSession = nil
@@ -292,15 +358,25 @@ final class WatchBoxingManager: NSObject, ObservableObject {
         ])
     }
 
+    /// Sends a payload that must be delivered eventually (session lifecycle,
+    /// spike events). Prefers live sendMessage when reachable, falls back to
+    /// transferUserInfo queue when the phone is not reachable so nothing is
+    /// lost across wrist-down / phone-out-of-range intervals.
     private func sendToPhone(_ payload: [String: Any]) {
         guard WCSession.isSupported() else { return }
         if WCSession.default.isReachable {
-            WCSession.default.sendMessage(payload, replyHandler: nil) { error in
-                print("[Watch→Phone] send error: \(error)")
+            WCSession.default.sendMessage(payload, replyHandler: nil) { [weak self] error in
+                print("[Watch→Phone] send error, falling back to userInfo: \(error)")
+                self?.enqueueUserInfo(payload)
             }
         } else {
-            WCSession.default.transferUserInfo(payload)
+            enqueueUserInfo(payload)
         }
+    }
+
+    private nonisolated func enqueueUserInfo(_ payload: [String: Any]) {
+        guard WCSession.isSupported() else { return }
+        WCSession.default.transferUserInfo(payload)
     }
 }
 
@@ -369,10 +445,14 @@ extension WatchBoxingManager: HKWorkoutSessionDelegate, HKLiveWorkoutBuilderDele
     nonisolated func workoutSession(_ workoutSession: HKWorkoutSession,
                                     didChangeTo toState: HKWorkoutSessionState,
                                     from fromState: HKWorkoutSessionState,
-                                    date: Date) {}
+                                    date: Date) {
+        print("[Watch] HKWorkoutSession state: \(fromState.rawValue) → \(toState.rawValue)")
+    }
 
     nonisolated func workoutSession(_ workoutSession: HKWorkoutSession,
-                                    didFailWithError error: Error) {}
+                                    didFailWithError error: Error) {
+        print("[Watch] HKWorkoutSession failed: \(error)")
+    }
 
     nonisolated func workoutBuilderDidCollectEvent(_ workoutBuilder: HKLiveWorkoutBuilder) {}
 
