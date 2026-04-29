@@ -29,6 +29,9 @@ final class TimeSeriesCollectManager: ObservableObject {
 
     @Published var isRecording      = false
     @Published var selectedLabel    = PunchLabel.leadJab.rawValue
+    @Published var participantId    = UserDefaults.standard.string(forKey: "phantomParticipantId") ?? "P00" {
+        didSet { UserDefaults.standard.set(participantId, forKey: "phantomParticipantId") }
+    }
     @Published var elapsedSeconds   = 0
 
     // Device counts — updated every sample batch
@@ -128,7 +131,7 @@ final class TimeSeriesCollectManager: ObservableObject {
     @discardableResult
     func saveCSV(source: ExportSource = .all) throws -> URL {
         let samples = samplesFor(source)
-        let url = FileUtils.documentsURL.appendingPathComponent(exportFilename(source, ext: "csv"))
+        let url = exportURL(source, ext: "csv")
         try samples.csvString().write(to: url, atomically: true, encoding: .utf8)
         return url
     }
@@ -138,14 +141,19 @@ final class TimeSeriesCollectManager: ObservableObject {
         let samples = samplesFor(source)
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-        let url = FileUtils.documentsURL.appendingPathComponent(exportFilename(source, ext: "json"))
+        let url = exportURL(source, ext: "json")
         try encoder.encode(samples).write(to: url)
         return url
     }
 
-    private func exportFilename(_ source: ExportSource, ext: String) -> String {
-        let srcSegment = source == .all ? "" : "\(source.rawValue)_"
-        return "\(selectedLabel)_\(srcSegment)\(FileUtils.dateStamp()).\(ext)"
+    private func exportURL(_ source: ExportSource, ext: String) -> URL {
+        let filename = FileUtils.prefixedRawFilename(
+            participantId: participantId,
+            label: selectedLabel,
+            source: source == .all ? nil : source.rawValue,
+            ext: ext
+        )
+        return FileUtils.documentsURL.appendingPathComponent(filename)
     }
 
     // MARK: - Live Buffers for Charts (last 200 samples per device)
@@ -268,8 +276,32 @@ final class TimeSeriesCollectManager: ObservableObject {
         // the file is the source of truth and lands in Documents directly,
         // showing up in FilesView automatically.
         WatchConnectivityManager.shared.onWatchRawFileSaved = { [weak self] url in
-            print("[TimeSeries] received Watch raw file: \(url.lastPathComponent) "
-                  + "(recording=\(self?.isRecording == true ? "active" : "stopped"))")
+            guard let self else { return }
+            let finalURL = self.renameWatchRawFileIfNeeded(url)
+            print("[TimeSeries] received Watch raw file: \(finalURL.lastPathComponent) "
+                  + "(recording=\(self.isRecording ? "active" : "stopped"))")
+        }
+    }
+
+    private func renameWatchRawFileIfNeeded(_ url: URL) -> URL {
+        let basename = url.deletingPathExtension().lastPathComponent
+        let participant = FileUtils.normalizedParticipantId(participantId)
+        if basename.hasPrefix("\(participant)_") {
+            return url
+        }
+
+        let filename = "\(participant)_\(url.lastPathComponent)"
+        let dest = FileUtils.documentsURL.appendingPathComponent(filename)
+
+        do {
+            if FileManager.default.fileExists(atPath: dest.path) {
+                try FileManager.default.removeItem(at: dest)
+            }
+            try FileManager.default.moveItem(at: url, to: dest)
+            return dest
+        } catch {
+            print("[TimeSeries] failed to rename Watch raw file: \(error)")
+            return url
         }
     }
 

@@ -334,8 +334,9 @@ final class WatchBoxingManager: NSObject, ObservableObject {
         guard !isSessionActive, !isRawStreaming else { return }
         guard let session = workoutSession else { return }
         session.end()
-        workoutBuilder?.endCollection(withEnd: Date()) { [weak self] _, _ in
-            self?.workoutBuilder?.finishWorkout { _, _ in }
+        let builder = workoutBuilder
+        builder?.endCollection(withEnd: Date()) { _, _ in
+            builder?.finishWorkout { _, _ in }
         }
         workoutSession = nil
         isWorkoutActive = false

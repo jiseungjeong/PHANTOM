@@ -34,16 +34,17 @@ enum DefenseLabel: String, Codable, CaseIterable {
 // MARK: - Combination Labels  (multi-punch sequences for dataset collection)
 
 enum CombinationLabel: String, Codable, CaseIterable {
-    case shadowboxing                  = "Shadowboxing"
-    case slipCrossHook                 = "Slip - Cross - Hook"
-    case slipUpperHookCross            = "Slip - Upper - Hook - Cross"
-    case slipHook                      = "Slip - Hook"
-    case jabJab                        = "Jab - Jab"
-    case jabStraight                   = "Jab - Straight"
-    case leadHookLeadUppercut          = "Lead Hook - Lead Uppercut"
-    case rearStraightRearUppercut      = "Rear Straight - Rear Uppercut"
-    case leadHookRearStraightLeadHook  = "Lead Hook - Rear Straight - Lead Hook"
-    case leadUpperRearUpperLeadHook    = "Lead Uppercut - Rear Uppercut - Lead Hook"
+    case combo_1_2          = "1-2 (Lead Jab-Cross)"
+    case combo_1_1          = "1-1 (Lead Jab-Lead Jab)"
+    case combo_3_4          = "3-4 (Lead Hook-Rear Hook)"
+    case combo_1_slip_2     = "1-Slip-2 (Lead Jab-Slip-Rear Cross)"
+    case combo_slip_2       = "Slip-2 (Slip-Rear Cross)"
+    case combo_roll_6       = "Roll-6 (Roll-Rear Uppercut)"
+
+    var displayName: String {
+        rawValue
+    }
+
 }
 
 // MARK: - Boxing Event

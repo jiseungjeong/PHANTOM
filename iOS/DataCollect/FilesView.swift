@@ -266,6 +266,8 @@ private struct LabelBreakdownRow: View {
     }
 
     private func labelColorFor(_ l: String) -> Color {
+        let comboLabels = DataCollectManager.combinationLabels
+        if comboLabels.contains(l) { return .indigo }
         let defenseLabels = DataCollectManager.defenseLabels
         if defenseLabels.contains(l) { return .purple }
         if l.hasPrefix("Lead") { return .blue }
@@ -369,4 +371,3 @@ private struct JSONDetailView: View {
         }
     }
 }
-

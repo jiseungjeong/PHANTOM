@@ -9,10 +9,12 @@ private let _punchLabels: [String] = PunchLabel.allCases
     .map(\.rawValue)
 
 private let _defenseLabels: [String] = DefenseLabel.allCases.map(\.rawValue)
+private let _combinationLabels: [String] = CombinationLabel.allCases.map(\.rawValue)
 
 // MARK: - Badge color helper
 
 private func tsBadgeColor(_ label: String) -> Color {
+    if _combinationLabels.contains(label) { return .indigo }
     if _defenseLabels.contains(label) { return .purple }
     if label.hasPrefix("Lead")        { return .blue }
     return .orange
@@ -27,6 +29,10 @@ struct TimeSeriesCollectView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
+                    ParticipantPrefixCard(
+                        participantId: $manager.participantId,
+                        disabled: manager.isRecording
+                    )
 
                     // ── iPhone charts ──────────────────────────────────────
                     SectionHeader(title: "iPhone", icon: "iphone", color: .teal)
@@ -143,6 +149,30 @@ struct TimeSeriesCollectView: View {
                 }
             }
         }
+    }
+}
+
+// MARK: - Participant Prefix
+
+private struct ParticipantPrefixCard: View {
+    @Binding var participantId: String
+    let disabled: Bool
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Label("File Prefix", systemImage: "person.text.rectangle")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            TextField("P03", text: $participantId)
+                .textInputAutocapitalization(.characters)
+                .autocorrectionDisabled()
+                .textFieldStyle(.roundedBorder)
+                .disabled(disabled)
+        }
+        .padding()
+        .background(.quaternary)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 }
 
@@ -318,14 +348,14 @@ private struct DeviceStatusTile: View {
     }
 }
 
-// MARK: - Label Picker  (Punch + Defense only — no Combination labels)
+// MARK: - Label Picker
 
 private struct TSLabelPicker: View {
     @Binding var selectedLabel: String
     let disabled: Bool
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 12) {
             Text("Activity Label").font(.headline)
 
             if disabled {
@@ -337,26 +367,66 @@ private struct TSLabelPicker: View {
                     .foregroundStyle(tsBadgeColor(selectedLabel))
                     .clipShape(RoundedRectangle(cornerRadius: 8))
             } else {
-                let allLabels = _punchLabels + _defenseLabels
-                LazyVGrid(
-                    columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())],
-                    spacing: 8
-                ) {
-                    ForEach(allLabels, id: \.self) { label in
-                        Button { selectedLabel = label } label: {
-                            Text(label)
-                                .font(.caption)
-                                .lineLimit(2)
-                                .multilineTextAlignment(.center)
-                                .padding(.vertical, 8)
-                                .frame(maxWidth: .infinity)
-                                .background(selectedLabel == label
-                                            ? tsBadgeColor(label) : Color(.systemGray5))
-                                .foregroundStyle(selectedLabel == label ? .white : .primary)
-                                .clipShape(RoundedRectangle(cornerRadius: 8))
-                        }
-                        .buttonStyle(.plain)
+                LabelGroupSection(
+                    title: "Attack",
+                    icon: "figure.boxing",
+                    labels: _punchLabels,
+                    selectedLabel: $selectedLabel
+                )
+
+                LabelGroupSection(
+                    title: "Defense",
+                    icon: "shield.fill",
+                    labels: _defenseLabels,
+                    selectedLabel: $selectedLabel
+                )
+
+                LabelGroupSection(
+                    title: "Combination",
+                    icon: "point.3.connected.trianglepath.dotted",
+                    labels: _combinationLabels,
+                    columnCount: 2,
+                    selectedLabel: $selectedLabel
+                )
+            }
+        }
+    }
+}
+
+private struct LabelGroupSection: View {
+    let title: String
+    let icon: String
+    let labels: [String]
+    var columnCount: Int = 3
+    @Binding var selectedLabel: String
+
+    private var columns: [GridItem] {
+        Array(repeating: GridItem(.flexible()), count: columnCount)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label(title, systemImage: icon)
+                .font(.caption)
+                .fontWeight(.semibold)
+                .foregroundStyle(.secondary)
+
+            LazyVGrid(columns: columns, spacing: 8) {
+                ForEach(labels, id: \.self) { label in
+                    Button { selectedLabel = label } label: {
+                        Text(label)
+                            .font(.caption)
+                            .lineLimit(columnCount == 2 ? 3 : 2)
+                            .multilineTextAlignment(.center)
+                            .padding(.vertical, 8)
+                            .padding(.horizontal, 4)
+                            .frame(maxWidth: .infinity, minHeight: columnCount == 2 ? 56 : 44)
+                            .background(selectedLabel == label
+                                        ? tsBadgeColor(label) : Color(.systemGray5))
+                            .foregroundStyle(selectedLabel == label ? .white : .primary)
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
                     }
+                    .buttonStyle(.plain)
                 }
             }
         }

@@ -31,6 +31,6 @@
 		<string>workout-processing</string>
 	</array>
 	<key>WKCompanionAppBundleIdentifier</key>
-	<string>com.jiseungjeong.boxingtracker</string>
+	<string>com.phantom.boxingtracker</string>
 </dict>
 </plist>
