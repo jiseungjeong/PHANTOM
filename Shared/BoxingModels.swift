@@ -19,27 +19,30 @@ enum PunchLabel: String, Codable, CaseIterable {
     }
 }
 
-// MARK: - Defense Labels  (6 classes: Sepanosian taxonomy + Step)
+// MARK: - Defense Labels  (6 classes)
 
 enum DefenseLabel: String, Codable, CaseIterable {
+    case guard_    = "Guard"
     case leftSlip  = "Left Slip"
     case rightSlip = "Right Slip"
     case leftRoll  = "Left Roll"
     case rightRoll = "Right Roll"
-    case pullBack  = "Pull Back"
     case step      = "Step"
-    case guard_    = "Guard"
 }
 
 // MARK: - Combination Labels  (multi-punch sequences for dataset collection)
 
 enum CombinationLabel: String, Codable, CaseIterable {
-    case combo_1_2          = "1-2 (Lead Jab-Cross)"
-    case combo_1_1          = "1-1 (Lead Jab-Lead Jab)"
-    case combo_3_4          = "3-4 (Lead Hook-Rear Hook)"
-    case combo_1_slip_2     = "1-Slip-2 (Lead Jab-Slip-Rear Cross)"
-    case combo_slip_2       = "Slip-2 (Slip-Rear Cross)"
-    case combo_roll_6       = "Roll-6 (Roll-Rear Uppercut)"
+    case leadJabRearJab              = "Lead Jab-Rear Jab"
+    case leadJabLeadJab              = "Lead Jab-Lead Jab"
+    case leadHookRearHook            = "Lead Hook-Rear Hook"
+    case rearHookLeadHook            = "Rear Hook-Lead Hook"
+    case leadJabRearHook             = "Lead Jab-Rear Hook"
+    case rearUppercutLeadHook        = "Rear Uppercut-Lead Hook"
+    case leadJabRightSlipRearJab     = "Lead Jab-Right Slip-Rear Jab"
+    case leftRollLeadHookRearHook    = "Left Roll-Lead Hook-Rear Hook"
+    case rightRollRearHookLeadHook   = "Right Roll-Rear Hook-Lead Hook"
+    case leadJabRightSlipRearHook    = "Lead Jab-Right Slip-Rear Hook"
 
     var displayName: String {
         rawValue

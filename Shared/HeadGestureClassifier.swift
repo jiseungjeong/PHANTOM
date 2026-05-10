@@ -8,11 +8,11 @@ import Foundation
 // Phase 1 (this implementation): gyroY threshold-based anomaly detection.
 //   - gyroY > +threshold → rightward head movement → .rightSlip (heuristic)
 //   - gyroY < -threshold → leftward head movement  → .leftSlip  (heuristic)
-//   - slow, sustained movement → .pullBack (heuristic)
+//   - slow, sustained movement → .guard_ (fallback heuristic)
 //
 // Phase 2: Replace processSample return with DTW against bundled templates
-//   from EarableBoxingHeadGestureRecognition/Data/dtw/ for accurate 5-class
-//   classification (left_slip, right_slip, left_roll, right_roll, pull_back).
+//   from EarableBoxingHeadGestureRecognition/Data/dtw/ for accurate
+//   defense classification.
 //
 // Sepanosian (UbiComp '24) uses gyroY at 50 Hz on OpenEarable.
 // AirPods Pro delivers ~100 Hz via CMHeadphoneMotionManager.
@@ -97,9 +97,9 @@ final class HeadGestureClassifier {
         let maxAccX  = accXValues.max() ?? 0
         let duration = Double(window.count)
 
-        // Pull back: slow, bilateral movement (low gyroY amplitude)
+        // Guard fallback: slow, bilateral movement (low gyroY amplitude)
         if abs(avgGyroY) < gyroYThreshold * 1.5 && duration > 40 {
-            return .pullBack
+            return .guard_
         }
 
         // Slip (fast, lateral): lateral accX dominates
