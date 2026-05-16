@@ -3,23 +3,151 @@ import SwiftUI
 // MARK: - Files View
 //
 // Browses all exported CSV / JSON files saved to the app's Documents folder.
-// Tap a file to inspect its contents; use the share button to share it.
+// Tap a file to inspect its contents; share individual files via the row's
+// quick-share button or bundle multiple files into a zip via Edit-mode
+// multi-select + "Share Selected", or zip the entire folder via "Share All".
 
 struct FilesView: View {
     @StateObject private var manager = SavedFilesManager()
 
+    // MARK: - Local UI state
+
+    /// Archive presented in the bottom card after a successful zip build.
+    /// Tapping Share opens UIActivityViewController; tapping the X discards.
+    @State private var preparedArchive: PreparedArchive?
+    @State private var isArchiving = false
+    @State private var showShareSheet = false
+    @State private var errorMessage: String?
+
+    struct PreparedArchive: Identifiable {
+        let id = UUID()
+        let url: URL
+        let fileCount: Int
+        let totalBytes: Int64
+    }
+
     var body: some View {
         NavigationStack {
+            FilesContent(
+                manager: manager,
+                preparedArchive: $preparedArchive,
+                isArchiving: $isArchiving,
+                showShareSheet: $showShareSheet,
+                errorMessage: $errorMessage,
+                shareAll: shareAll,
+                shareSelected: shareSelected,
+                deleteSelected: deleteSelected,
+                discardPreparedArchive: discardPreparedArchive,
+                dismissPreparedArchive: dismissPreparedArchive
+            )
+            .navigationTitle("Saved Files")
+            .navigationBarTitleDisplayMode(.large)
+        }
+        // onAppear must be on NavigationStack (outside it), not on a child view inside,
+        // so it fires every time this tab is selected.
+        .onAppear { manager.refresh() }
+    }
+
+    // MARK: - Actions
+
+    private func shareAll() {
+        makeArchiveAndShow(urls: manager.allFileURLs)
+    }
+
+    private func shareSelected() {
+        makeArchiveAndShow(urls: manager.selectedFiles.map(\.url))
+    }
+
+    private func deleteSelected() {
+        for file in manager.selectedFiles {
+            manager.delete(file)
+        }
+        manager.clearSelection()
+    }
+
+    private func makeArchiveAndShow(urls: [URL]) {
+        guard !urls.isEmpty else { return }
+        isArchiving = true
+        Task.detached(priority: .userInitiated) {
+            do {
+                let archiveURL = try ExportArchiver.makeArchive(urls: urls)
+                let attrs = (try? FileManager.default
+                    .attributesOfItem(atPath: archiveURL.path)) ?? [:]
+                let size = (attrs[.size] as? Int64) ?? 0
+                await MainActor.run {
+                    self.preparedArchive = PreparedArchive(
+                        url: archiveURL,
+                        fileCount: urls.count,
+                        totalBytes: size
+                    )
+                    self.isArchiving = false
+                }
+            } catch {
+                await MainActor.run {
+                    self.errorMessage = error.localizedDescription
+                    self.isArchiving = false
+                }
+            }
+        }
+    }
+
+    private func discardPreparedArchive() {
+        if let url = preparedArchive?.url {
+            try? FileManager.default.removeItem(at: url)
+        }
+        preparedArchive = nil
+    }
+
+    private func dismissPreparedArchive() {
+        // After the share sheet closes, drop the archive reference. The tmp
+        // zip will be cleaned up by the OS eventually; do not delete it here
+        // because Mail/Files/etc. may still be uploading it asynchronously.
+        preparedArchive = nil
+    }
+}
+
+// MARK: - Files Content (reads SwiftUI's environment editMode)
+
+private struct FilesContent: View {
+    @ObservedObject var manager: SavedFilesManager
+    @Binding var preparedArchive: FilesView.PreparedArchive?
+    @Binding var isArchiving: Bool
+    @Binding var showShareSheet: Bool
+    @Binding var errorMessage: String?
+    let shareAll: () -> Void
+    let shareSelected: () -> Void
+    let deleteSelected: () -> Void
+    let discardPreparedArchive: () -> Void
+    let dismissPreparedArchive: () -> Void
+
+    @Environment(\.editMode) private var editMode
+
+    private var isEditing: Bool { editMode?.wrappedValue.isEditing ?? false }
+
+    var body: some View {
+        ZStack(alignment: .bottom) {
+            // Main content
             Group {
                 if manager.files.isEmpty {
                     EmptyFilesState()
                 } else {
-                    List {
+                    List(selection: $manager.selectedFileIDs) {
                         ForEach(manager.files) { file in
-                            NavigationLink {
-                                FileDetailView(file: file)
-                            } label: {
+                            // In edit mode SwiftUI lays out a selection circle
+                            // on each row only when the row label is NOT a
+                            // NavigationLink. Switch presentations so the user
+                            // can either tap-to-navigate (normal) or
+                            // tap-to-select (edit).
+                            if isEditing {
                                 FileRow(file: file, manager: manager)
+                                    .tag(file.id)
+                            } else {
+                                NavigationLink {
+                                    FileDetailView(file: file)
+                                } label: {
+                                    FileRow(file: file, manager: manager)
+                                }
+                                .tag(file.id)
                             }
                         }
                         .onDelete { offsets in
@@ -27,19 +155,155 @@ struct FilesView: View {
                         }
                     }
                     .listStyle(.insetGrouped)
+                    // Leave room at the bottom so the floating bar doesn't
+                    // cover the last row.
+                    .safeAreaInset(edge: .bottom, spacing: 0) {
+                        if showsBottomBar {
+                            Color.clear.frame(height: 70)
+                        }
+                    }
                 }
             }
-            .navigationTitle("Saved Files")
-            .navigationBarTitleDisplayMode(.large)
-            .toolbar {
-                if !manager.files.isEmpty {
-                    EditButton()
+
+            // Floating bottom bar (only when needed)
+            if showsBottomBar {
+                bottomBarContent
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+        }
+        .animation(.easeInOut(duration: 0.2), value: isEditing)
+        .animation(.easeInOut(duration: 0.2), value: manager.selectedFileIDs)
+        .animation(.easeInOut(duration: 0.2), value: isArchiving)
+        .animation(.easeInOut(duration: 0.2), value: preparedArchive?.id)
+        .toolbar { toolbarContent }
+        .sheet(isPresented: $showShareSheet, onDismiss: dismissPreparedArchive) {
+            if let archive = preparedArchive {
+                ShareSheet(url: archive.url)
+            }
+        }
+        .alert("Export Failed",
+               isPresented: alertBinding,
+               actions: { Button("OK") { errorMessage = nil } },
+               message: { Text(errorMessage ?? "") })
+    }
+
+    /// True when any of the three bottom-bar states should render.
+    /// Note: we do NOT gate on `isEditing` because iOS 17's
+    /// `List(selection:)` with `.insetGrouped` style enables selection
+    /// without flipping the SwiftUI environment editMode. Selection set
+    /// being non-empty is a sufficient signal that the user is selecting.
+    private var showsBottomBar: Bool {
+        if isArchiving { return true }
+        if preparedArchive != nil { return true }
+        if !manager.selectedFileIDs.isEmpty { return true }
+        return false
+    }
+
+    @ViewBuilder
+    private var bottomBarContent: some View {
+        if isArchiving {
+            archivingBar
+        } else if let archive = preparedArchive {
+            archiveReadyCard(archive)
+        } else if !manager.selectedFileIDs.isEmpty {
+            selectionActionBar
+        }
+    }
+
+    // MARK: - Toolbar
+
+    @ToolbarContentBuilder
+    private var toolbarContent: some ToolbarContent {
+        if !manager.files.isEmpty {
+            ToolbarItem(placement: .navigationBarLeading) {
+                EditButton()
+            }
+            if !isEditing {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button { shareAll() } label: {
+                        Label("Share All", systemImage: "square.and.arrow.up.on.square")
+                    }
+                    .disabled(isArchiving)
                 }
             }
         }
-        // onAppear must be on NavigationStack (outside it), not on a child view inside,
-        // so it fires every time this tab is selected.
-        .onAppear { manager.refresh() }
+    }
+
+    // MARK: - Bottom bar pieces (composed by bottomBarContent)
+
+    private var archivingBar: some View {
+        HStack(spacing: 10) {
+            ProgressView()
+            Text("Preparing archive…")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            Spacer()
+        }
+        .padding()
+        .background(.bar)
+    }
+
+    @ViewBuilder
+    private func archiveReadyCard(_ archive: FilesView.PreparedArchive) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: "doc.zipper")
+                .font(.title2)
+                .foregroundStyle(.blue)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Archive ready")
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                Text("\(archive.fileCount) files · \(formattedSize(archive.totalBytes))")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+            Button { showShareSheet = true } label: {
+                Label("Share", systemImage: "square.and.arrow.up")
+            }
+            .buttonStyle(.borderedProminent)
+            Button { discardPreparedArchive() } label: {
+                Image(systemName: "xmark.circle.fill")
+                    .foregroundStyle(.secondary)
+            }
+            .buttonStyle(.plain)
+        }
+        .padding()
+        .background(.bar)
+    }
+
+    private var selectionActionBar: some View {
+        HStack {
+            Button(role: .destructive) {
+                deleteSelected()
+            } label: {
+                Label("Delete (\(manager.selectedFileIDs.count))",
+                      systemImage: "trash")
+            }
+            Spacer()
+            Button {
+                shareSelected()
+            } label: {
+                Label("Share (\(manager.selectedFileIDs.count))",
+                      systemImage: "square.and.arrow.up.on.square")
+            }
+            .buttonStyle(.borderedProminent)
+        }
+        .padding()
+        .background(.bar)
+    }
+
+    private var alertBinding: Binding<Bool> {
+        Binding(
+            get: { errorMessage != nil },
+            set: { if !$0 { errorMessage = nil } }
+        )
+    }
+
+    private func formattedSize(_ bytes: Int64) -> String {
+        let kb = Double(bytes) / 1024
+        if kb < 1024 { return String(format: "%.1f KB", max(kb, 0.1)) }
+        return String(format: "%.2f MB", kb / 1024)
     }
 }
 
@@ -104,6 +368,18 @@ private struct EmptyFilesState: View {
         }
         .padding()
     }
+}
+
+// MARK: - Share Sheet wrapper
+
+private struct ShareSheet: UIViewControllerRepresentable {
+    let url: URL
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: [url], applicationActivities: nil)
+    }
+
+    func updateUIViewController(_ controller: UIActivityViewController, context: Context) {}
 }
 
 // MARK: - File Detail View

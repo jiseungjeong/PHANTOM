@@ -10,6 +10,10 @@ final class SavedFilesManager: ObservableObject {
 
     @Published private(set) var files: [SavedFile] = []
 
+    /// Multi-select state used by FilesView's Edit mode. Allows the view to
+    /// drive selection through SwiftUI's `List(selection:)` binding.
+    @Published var selectedFileIDs: Set<UUID> = []
+
     // MARK: - SavedFile
 
     struct SavedFile: Identifiable {
@@ -28,6 +32,26 @@ final class SavedFilesManager: ObservableObject {
             let v = try? url.resourceValues(forKeys: [.contentModificationDateKey])
             return v?.contentModificationDate ?? .distantPast
         }
+    }
+
+    // MARK: - Selection helpers
+
+    var selectedFiles: [SavedFile] {
+        files.filter { selectedFileIDs.contains($0.id) }
+    }
+
+    var allFileURLs: [URL] { files.map(\.url) }
+
+    func toggleSelection(_ file: SavedFile) {
+        if selectedFileIDs.contains(file.id) {
+            selectedFileIDs.remove(file.id)
+        } else {
+            selectedFileIDs.insert(file.id)
+        }
+    }
+
+    func clearSelection() {
+        selectedFileIDs.removeAll()
     }
 
     // MARK: - Public
@@ -55,6 +79,7 @@ final class SavedFilesManager: ObservableObject {
     func delete(_ file: SavedFile) {
         try? FileManager.default.removeItem(at: file.url)
         files.removeAll { $0.id == file.id }
+        selectedFileIDs.remove(file.id)
     }
 
     // MARK: - Helpers

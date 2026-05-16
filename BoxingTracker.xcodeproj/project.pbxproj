@@ -44,6 +44,7 @@
 		CA945D0E675196B605CB166B /* FileUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CA5C5984787C4F567D8E16B /* FileUtils.swift */; };
 		CCCDB074F73A5AAC2F049447 /* SpikeDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6A4624F2B230981476DB0E4 /* SpikeDetector.swift */; };
 		CF9F5A92559195415364F9C5 /* WorkoutHistoryManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FCFD0BD42B770880F5E9235 /* WorkoutHistoryManager.swift */; };
+		D1DEAB6EFE74D7BF1DD43391 /* ExportArchiver.swift in Sources */ = {isa = PBXBuildFile; fileRef = B04372636BACA3E86E12A880 /* ExportArchiver.swift */; };
 		DE9FE4BF8264BE52619E73A4 /* HeadGestureClassifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AD16D2E1A63AF7300F7CAFB /* HeadGestureClassifier.swift */; };
 		ED80935409BDEAF27C98AC07 /* FilesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBD6AA7EF45122D8943A6405 /* FilesView.swift */; };
 		F05FE98480F6CD1965CBAD4F /* DataCollectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 924F8D6885D5E3DA9078EFA2 /* DataCollectView.swift */; };
@@ -112,6 +113,7 @@
 		9D4CF6AED9005052412858F1 /* WatchBoxingApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchBoxingApp.swift; sourceTree = "<group>"; };
 		A981092844965F0C0AE9F893 /* ConnectionBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionBar.swift; sourceTree = "<group>"; };
 		AB7911C9B307E4A8681CBF3B /* LastEventBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LastEventBadge.swift; sourceTree = "<group>"; };
+		B04372636BACA3E86E12A880 /* ExportArchiver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportArchiver.swift; sourceTree = "<group>"; };
 		B2CD20E602C2542E22601425 /* TimeSeriesCollectManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeSeriesCollectManager.swift; sourceTree = "<group>"; };
 		BBD6AA7EF45122D8943A6405 /* FilesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilesView.swift; sourceTree = "<group>"; };
 		CB40E634B0A1FBDECB06691A /* BoxingTracker.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = BoxingTracker.entitlements; sourceTree = "<group>"; };
@@ -209,6 +211,7 @@
 				30A1FD564A651FC0C014EFD8 /* DataCollectManager.swift */,
 				25A4AC8EFCF8051C9D5D3D6C /* DataCollectSample.swift */,
 				924F8D6885D5E3DA9078EFA2 /* DataCollectView.swift */,
+				B04372636BACA3E86E12A880 /* ExportArchiver.swift */,
 				BBD6AA7EF45122D8943A6405 /* FilesView.swift */,
 				1D1C52C71001A21073A38631 /* ParsedCSV.swift */,
 				9A362332D5B5736C1C306498 /* SavedFilesManager.swift */,
@@ -298,7 +301,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
-				LastUpgradeCheck = 2640;
+				LastUpgradeCheck = 2650;
 				TargetAttributes = {
 					25CDF2380C9C34930394F2C9 = {
 						ProvisioningStyle = Automatic;
@@ -357,6 +360,7 @@
 				73A9B14FC29E94BB4C49E7A8 /* DataCollectManager.swift in Sources */,
 				C43D628483934943CB73676C /* DataCollectSample.swift in Sources */,
 				F05FE98480F6CD1965CBAD4F /* DataCollectView.swift in Sources */,
+				D1DEAB6EFE74D7BF1DD43391 /* ExportArchiver.swift in Sources */,
 				19E834D934ED353F0B68F32F /* FileUtils.swift in Sources */,
 				ED80935409BDEAF27C98AC07 /* FilesView.swift in Sources */,
 				5A599B936CB0F0A9BDAA2DC6 /* HeadGestureClassifier.swift in Sources */,
@@ -433,7 +437,7 @@
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = JH4THZUB7T;
+				DEVELOPMENT_TEAM = KD5JZF2BDW;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -463,6 +467,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = JH4THZUB7T;
 				INFOPLIST_FILE = iOS/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -512,7 +517,7 @@
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = JH4THZUB7T;
+				DEVELOPMENT_TEAM = KD5JZF2BDW;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -549,6 +554,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = JH4THZUB7T;
 				INFOPLIST_FILE = iOS/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -567,6 +573,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Watch/BoxingTrackerWatch.entitlements;
 				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = JH4THZUB7T;
 				INFOPLIST_FILE = Watch/Info.plist;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jiseung.phantom.boxingtracker.watchkitapp;
 				SDKROOT = watchos;
@@ -582,6 +589,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Watch/BoxingTrackerWatch.entitlements;
 				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = JH4THZUB7T;
 				INFOPLIST_FILE = Watch/Info.plist;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jiseung.phantom.boxingtracker.watchkitapp;
 				SDKROOT = watchos;
