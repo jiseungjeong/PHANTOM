@@ -11,7 +11,7 @@ import Foundation
 //   - slow, sustained movement → .guard_ (fallback heuristic)
 //
 // Phase 2: Replace processSample return with DTW against bundled templates
-//   from EarableBoxingHeadGestureRecognition/Data/dtw/ for accurate
+//   from references/EarableBoxingHeadGestureRecognition/Data/dtw/ for accurate
 //   defense classification.
 //
 // Sepanosian (UbiComp '24) uses gyroY at 50 Hz on OpenEarable.
