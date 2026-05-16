@@ -3,6 +3,10 @@ import CoreMotion
 import WatchConnectivity
 import WatchKit
 import HealthKit
+import os
+
+private let wcLog = Logger(subsystem: "com.jiseung.phantom.boxingtracker.watchkitapp",
+                           category: "WC-Watch")
 
 // MARK: - Watch Boxing Manager  (PHANTOM architecture)
 //
@@ -28,6 +32,22 @@ final class WatchBoxingManager: NSObject, ObservableObject {
     private let detector      = SpikeDetector()
     private let updateInterval: TimeInterval = 1.0 / 100.0
 
+    // MARK: - HealthKit authorization state
+    //
+    // The Watch app's keep-alive (and therefore CMMotionManager / WCSession
+    // reachability) depends entirely on an active HKWorkoutSession, which
+    // requires user authorization. The UI gates the main interface behind
+    // this state so the user must grant before any feature is usable.
+
+    enum HKAuthState {
+        case notDetermined  // App just launched, no auth attempt yet
+        case requesting     // requestAuthorization is in flight
+        case denied         // User denied — show permission gate
+        case granted        // OK — main UI accessible
+    }
+
+    @Published private(set) var hkAuthState: HKAuthState = .notDetermined
+
     // MARK: - Published State
 
     @Published var isSessionActive  = false
@@ -42,7 +62,7 @@ final class WatchBoxingManager: NSObject, ObservableObject {
 
     // MARK: - Raw Streaming
 
-    private var isRawStreaming   = false
+    @Published private(set) var isRawStreaming = false
     private var rawBuffer:  [Double] = []   // stride-7: tsMs,ax,ay,az,gx,gy,gz per sample
     private let rawBatchSize     = 50       // flush every 50 samples (~500 ms at 100 Hz)
 
@@ -81,6 +101,14 @@ final class WatchBoxingManager: NSObject, ObservableObject {
         }
 
         restoreSessionIfNeeded()
+
+        // Start an HKWorkoutSession immediately on launch so:
+        //   1) the Watch app stays running (background suspension blocked)
+        //   2) WCSession.isReachable stays true → iPhone can start/stop remotely
+        //      without the user pressing anything on the Watch
+        //   3) the HealthKit authorization dialog (or permission gate) is
+        //      surfaced as soon as the user opens the app
+        beginWorkoutKeepAlive()
     }
 
     /// If the app was killed while a session was active, resume it automatically
@@ -143,7 +171,7 @@ final class WatchBoxingManager: NSObject, ObservableObject {
         ud.removeObject(forKey: PersistKey.anchorTs)
         ud.removeObject(forKey: PersistKey.spikeCount)
 
-        endWorkoutKeepAliveIfIdle()
+        // Keep HKWorkoutSession alive — user ends it explicitly via UI.
 
         if notifyPhone {
             sendToPhone([WatchMessageKey.action: WatchMessageKey.watchSessionStop])
@@ -197,7 +225,8 @@ final class WatchBoxingManager: NSObject, ObservableObject {
         transferFullBufferToPhone()
         rawFullBuffer = []
 
-        endWorkoutKeepAliveIfIdle()
+        // Keep HKWorkoutSession alive so watchOS doesn't dismiss the app to the
+        // clock face. User explicitly ends it via the "End Workout" button.
     }
 
     /// Live-preview flush. Best-effort only: if the phone is not reachable
@@ -278,22 +307,36 @@ final class WatchBoxingManager: NSObject, ObservableObject {
 
     private func beginWorkoutKeepAlive() {
         guard workoutSession == nil else { return }
-        guard HKHealthStore.isHealthDataAvailable() else { return }
+        guard HKHealthStore.isHealthDataAvailable() else {
+            hkAuthState = .denied
+            return
+        }
 
+        hkAuthState = .requesting
         let typesToShare: Set = [HKObjectType.workoutType()]
         healthStore.requestAuthorization(toShare: typesToShare, read: []) { [weak self] granted, error in
             Task { @MainActor in
                 guard let self else { return }
                 if let error {
-                    print("[Watch] HK auth error: \(error)")
+                    wcLog.error("[Watch] HK auth error: \(error.localizedDescription)")
                 }
                 guard granted else {
-                    print("[Watch] HK auth not granted — Watch will suspend when wrist drops")
+                    wcLog.notice("[Watch] HK auth not granted — Watch will suspend when wrist drops")
+                    self.hkAuthState = .denied
                     return
                 }
+                self.hkAuthState = .granted
                 self.startWorkoutSessionNow()
             }
         }
+    }
+
+    /// Called by the permission-gate UI's "Grant Permission" button.
+    /// Note: watchOS won't re-present the system dialog if the user already
+    /// denied. In that case the user must enable the permission via Settings
+    /// → Privacy → Health; the gate UI surfaces that hint.
+    func retryHealthKitAuthorization() {
+        beginWorkoutKeepAlive()
     }
 
     @MainActor
@@ -321,27 +364,18 @@ final class WatchBoxingManager: NSObject, ObservableObject {
                 if !ok   { print("[Watch] beginCollection returned not-ok") }
             }
             isWorkoutActive = true
-            print("[Watch] HKWorkoutSession started — keep-alive active")
+            wcLog.notice("[Watch] HKWorkoutSession started — keep-alive active")
         } catch {
-            print("[Watch] HKWorkoutSession start failed: \(error)")
+            wcLog.error("[Watch] HKWorkoutSession start failed: \(error.localizedDescription)")
             workoutSession = nil
             workoutBuilder = nil
             isWorkoutActive = false
         }
     }
 
-    private func endWorkoutKeepAliveIfIdle() {
-        guard !isSessionActive, !isRawStreaming else { return }
-        guard let session = workoutSession else { return }
-        session.end()
-        let builder = workoutBuilder
-        builder?.endCollection(withEnd: Date()) { _, _ in
-            builder?.finishWorkout { _, _ in }
-        }
-        workoutSession = nil
-        isWorkoutActive = false
-        workoutBuilder = nil
-    }
+    // Workout termination is no longer user-driven. The HKWorkoutSession lives
+    // for the lifetime of the app; watchOS reclaims it when the user kills the
+    // app from the dock.
 
     // MARK: - WCSession
 
@@ -365,13 +399,11 @@ final class WatchBoxingManager: NSObject, ObservableObject {
     /// lost across wrist-down / phone-out-of-range intervals.
     private func sendToPhone(_ payload: [String: Any]) {
         guard WCSession.isSupported() else { return }
-        if WCSession.default.isReachable {
-            WCSession.default.sendMessage(payload, replyHandler: nil) { [weak self] error in
-                print("[Watch→Phone] send error, falling back to userInfo: \(error)")
-                self?.enqueueUserInfo(payload)
-            }
-        } else {
-            enqueueUserInfo(payload)
+        // Always try sendMessage first — see iOS WatchConnectivityManager
+        // for the rationale (Apple's isReachable flag can stay stale).
+        WCSession.default.sendMessage(payload, replyHandler: nil) { [weak self] error in
+            wcLog.error("[Watch→Phone] sendMessage failed, falling back to userInfo: \(error.localizedDescription)")
+            self?.enqueueUserInfo(payload)
         }
     }
 
@@ -390,13 +422,22 @@ extension WatchBoxingManager: WCSessionDelegate {
         activationDidCompleteWith state: WCSessionActivationState,
         error: Error?
     ) {
+        let reachable    = session.isReachable
+        let stateRaw     = state.rawValue
+        let companion    = session.isCompanionAppInstalled
+        let errDesc      = error?.localizedDescription ?? "nil"
         Task { @MainActor in
-            self.isPhoneReachable = (state == .activated) && session.isReachable
+            self.isPhoneReachable = (state == .activated) && reachable
+            wcLog.notice("[WC-Watch] activated: state=\(stateRaw) reachable=\(reachable) companionInstalled=\(companion) error=\(errDesc)")
         }
     }
 
     nonisolated func sessionReachabilityDidChange(_ session: WCSession) {
-        Task { @MainActor in self.isPhoneReachable = session.isReachable }
+        let reachable = session.isReachable
+        Task { @MainActor in
+            self.isPhoneReachable = reachable
+            wcLog.notice("[WC-Watch] reachability changed: \(reachable)")
+        }
     }
 
     nonisolated func session(_ session: WCSession,

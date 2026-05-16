@@ -1,5 +1,8 @@
 import Foundation
 import WatchConnectivity
+import os
+
+private let wcLog = Logger(subsystem: "com.jiseung.phantom.boxingtracker", category: "WC-iOS")
 
 // MARK: - Watch Connectivity Manager  (iOS side)
 //
@@ -76,11 +79,22 @@ final class WatchConnectivityManager: NSObject, ObservableObject {
 
     private func dispatch(_ payload: [String: Any]) {
         guard WCSession.isSupported() else { return }
-        if WCSession.default.isReachable {
-            WCSession.default.sendMessage(payload, replyHandler: nil) { error in
-                print("[WatchConnectivity] send error: \(error)")
-            }
-        } else {
+
+        let action = payload[WatchMessageKey.action] as? String ?? "?"
+
+        // Always try sendMessage first, even when isReachable reports false.
+        //
+        // Apple's `isReachable` flag is unreliable on iOS: it can stay stale
+        // at `false` for the entire lifetime of a launch even after a clean
+        // BT handshake, until a sendMessage is actually attempted. The act of
+        // calling sendMessage wakes both sides of the WCSession, after which
+        // the reachable flag flips to true and stays accurate.
+        //
+        // If the message really can't be delivered (counterpart app killed,
+        // BT off), the errorHandler fires and we fall back to the queued
+        // transferUserInfo channel so no payload is lost.
+        WCSession.default.sendMessage(payload, replyHandler: nil) { error in
+            wcLog.error("[WC-iOS] sendMessage failed (action=\(action)), falling back to userInfo: \(error.localizedDescription)")
             WCSession.default.transferUserInfo(payload)
         }
     }
@@ -125,15 +139,23 @@ extension WatchConnectivityManager: WCSessionDelegate {
         activationDidCompleteWith activationState: WCSessionActivationState,
         error: Error?
     ) {
+        let paired      = session.isPaired
+        let reachable   = session.isReachable
+        let installed   = session.isWatchAppInstalled
+        let state       = activationState.rawValue
+        let errDesc     = error?.localizedDescription ?? "nil"
         Task { @MainActor in
-            self.isWatchPaired    = session.isPaired
-            self.isWatchReachable = session.isReachable
+            self.isWatchPaired    = paired
+            self.isWatchReachable = reachable
+            wcLog.notice("[WC-iOS] activated: state=\(state) paired=\(paired) reachable=\(reachable) installed=\(installed) error=\(errDesc)")
         }
     }
 
     nonisolated func sessionReachabilityDidChange(_ session: WCSession) {
+        let reachable = session.isReachable
         Task { @MainActor in
-            self.isWatchReachable = session.isReachable
+            self.isWatchReachable = reachable
+            wcLog.notice("[WC-iOS] reachability changed: \(reachable)")
         }
     }
 

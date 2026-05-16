@@ -583,7 +583,7 @@
 				CODE_SIGN_ENTITLEMENTS = Watch/BoxingTrackerWatch.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				INFOPLIST_FILE = Watch/Info.plist;
-				PRODUCT_BUNDLE_IDENTIFIER = com.phantom.boxingtracker.watchkitapp;
+				PRODUCT_BUNDLE_IDENTIFIER = com.jiseung.phantom.boxingtracker.watchkitapp;
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
 				TARGETED_DEVICE_FAMILY = 4;
