@@ -22,6 +22,17 @@ final class PhoneMotionManager: ObservableObject {
 
     var onSpike: (([Double], Double) -> Void)?
 
+    /// Optional raw-sample hook (Feature D). When set, every motion sample is
+    /// emitted as a HARApp-format TimeSeriesRawSample (total acceleration incl.
+    /// gravity + rotation rate, absolute Unix timestamp) alongside the existing
+    /// spike detection. Used to accumulate raw IMU during a live-count session
+    /// so the session can be segmented into single motions on stop.
+    var onRawSample: ((TimeSeriesRawSample) -> Void)?
+
+    /// The label to stamp on emitted raw samples. Live-count sessions don't have
+    /// a fixed label, so this stays empty; segmentation ignores the label column.
+    var rawLabel: String = ""
+
     init() {
         detector.onSpike = { [weak self] window, tsMs in
             self?.onSpike?(window, tsMs)
@@ -39,8 +50,18 @@ final class PhoneMotionManager: ObservableObject {
             let mag  = accelerationMagnitude(x: motion.userAcceleration.x,
                                              y: motion.userAcceleration.y,
                                              z: motion.userAcceleration.z)
-            let tsMs = (Date().timeIntervalSince1970 - anchorTs) * 1000
+            let ts   = Date().timeIntervalSince1970
+            let tsMs = (ts - anchorTs) * 1000
             self.detector.processSample(magnitude: mag, tsMs: tsMs)
+
+            if let onRawSample = self.onRawSample {
+                let ua = motion.userAcceleration, grav = motion.gravity, gr = motion.rotationRate
+                onRawSample(TimeSeriesRawSample(
+                    timestamp: ts, source: "iPhone", label: self.rawLabel,
+                    accX: ua.x + grav.x, accY: ua.y + grav.y, accZ: ua.z + grav.z,
+                    gyroX: gr.x, gyroY: gr.y, gyroZ: gr.z
+                ))
+            }
         }
         isActive = true
     }

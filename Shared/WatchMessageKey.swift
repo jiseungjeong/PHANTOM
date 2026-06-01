@@ -11,6 +11,7 @@ enum WatchMessageKey {
     static let sessionStart = "sessionStart"
     static let sessionStop  = "sessionStop"
     static let anchorTs     = "anchorTs"      // Unix epoch, used to sync timestamps
+    static let collectRaw   = "collectRaw"    // Bool: also stream raw IMU during a live session (Feature D)
 
     // Session lifecycle – Watch → iPhone
     static let watchSessionStart = "watchSessionStart"  // Watch-initiated session start

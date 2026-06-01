@@ -100,7 +100,14 @@ final class TimeSeriesCollectManager: ObservableObject {
         startTimer()
     }
 
-    func stopRecording() {
+    /// Stop recording all streams.
+    ///
+    /// - Parameter autoSave: when true (default, used by the Raw Stream tab),
+    ///   the buffered samples are written to a CSV in Documents immediately on
+    ///   stop, mirroring HARApp behavior. The rule-based Session flow passes
+    ///   `false` so it can classify `allSamples` in memory without leaving an
+    ///   export file behind.
+    func stopRecording(autoSave: Bool = true) {
         guard isRecording else { return }
         motionManager.stopDeviceMotionUpdates()
         headphoneMotion.stopDeviceMotionUpdates()
@@ -111,8 +118,9 @@ final class TimeSeriesCollectManager: ObservableObject {
         airPodsConnected = false
         isRecording    = false
 
-        // Auto-save — mirrors HARApp behavior: file is written immediately on stop
-        lastSavedURL = try? saveCSV()
+        if autoSave {
+            lastSavedURL = try? saveCSV()
+        }
     }
 
     // MARK: - Export

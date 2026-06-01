@@ -66,6 +66,10 @@ final class WatchBoxingManager: NSObject, ObservableObject {
     private var rawBuffer:  [Double] = []   // stride-7: tsMs,ax,ay,az,gx,gy,gz per sample
     private let rawBatchSize     = 50       // flush every 50 samples (~500 ms at 100 Hz)
 
+    /// Feature D: true while a live session is also buffering raw IMU (driven
+    /// from the session motion callback, not startRawStream).
+    private var collectRawDuringSession = false
+
     // Authoritative full buffer — every sample collected during raw streaming.
     // Streamed batches are best-effort for live preview only; this buffer is what
     // gets written to a tmp CSV and shipped to iPhone via transferFile on stop.
@@ -128,21 +132,50 @@ final class WatchBoxingManager: NSObject, ObservableObject {
 
     func startSession(anchorTs: TimeInterval,
                       notifyPhone: Bool = false,
-                      resuming: Bool = false) {
+                      resuming: Bool = false,
+                      collectRaw: Bool = false) {
         self.anchorTs = anchorTs
         guard !isSessionActive, motionManager.isDeviceMotionAvailable else { return }
 
         beginWorkoutKeepAlive()
 
         if !resuming { spikeCount = 0 }
+
+        // Feature D: when the iPhone requests it, the same motion callback that
+        // drives lead-spike detection also buffers raw IMU and ships it to the
+        // iPhone in batches. The Watch has a single CMMotionManager, so the two
+        // streams must share one callback rather than each calling
+        // startDeviceMotionUpdates (the second call would replace the first).
+        collectRawDuringSession = collectRaw
+        if collectRaw {
+            rawBuffer = []
+        }
+
         motionManager.deviceMotionUpdateInterval = updateInterval
         motionManager.startDeviceMotionUpdates(to: .main) { [weak self] motion, _ in
             guard let self, let motion else { return }
+            let now  = Date().timeIntervalSince1970
             let mag  = accelerationMagnitude(x: motion.userAcceleration.x,
                                              y: motion.userAcceleration.y,
                                              z: motion.userAcceleration.z)
-            let tsMs = (Date().timeIntervalSince1970 - self.anchorTs) * 1000
+            let tsMs = (now - self.anchorTs) * 1000
             self.detector.processSample(magnitude: mag, tsMs: tsMs)
+
+            if self.collectRawDuringSession {
+                // stride-7: absolute Unix ts, total accel (incl. gravity), gyro
+                self.rawBuffer.append(contentsOf: [
+                    now,
+                    motion.userAcceleration.x + motion.gravity.x,
+                    motion.userAcceleration.y + motion.gravity.y,
+                    motion.userAcceleration.z + motion.gravity.z,
+                    motion.rotationRate.x,
+                    motion.rotationRate.y,
+                    motion.rotationRate.z,
+                ])
+                if self.rawBuffer.count >= self.rawBatchSize * 7 {
+                    self.flushRawBuffer()
+                }
+            }
         }
         isSessionActive = true
 
@@ -163,6 +196,14 @@ final class WatchBoxingManager: NSObject, ObservableObject {
         guard isSessionActive else { return }
         motionManager.stopDeviceMotionUpdates()
         detector.reset()
+
+        // Feature D: flush any tail raw samples buffered during the session.
+        if collectRawDuringSession {
+            if rawBuffer.count >= 7 { flushRawBuffer() }
+            rawBuffer = []
+            collectRawDuringSession = false
+        }
+
         isSessionActive = false
         watchInitiatedSession = false
 
@@ -466,7 +507,8 @@ extension WatchBoxingManager: WCSessionDelegate {
         switch action {
         case WatchMessageKey.sessionStart:
             let anchor = msg[WatchMessageKey.anchorTs] as? TimeInterval ?? Date().timeIntervalSince1970
-            startSession(anchorTs: anchor)
+            let collectRaw = msg[WatchMessageKey.collectRaw] as? Bool ?? false
+            startSession(anchorTs: anchor, collectRaw: collectRaw)
         case WatchMessageKey.sessionStop:
             stopSession()
         case WatchMessageKey.rawStreamStart:

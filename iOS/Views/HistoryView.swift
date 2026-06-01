@@ -76,9 +76,6 @@ private struct DaySummaryCard: View {
                         StatPill(label: "Lead",    value: "\(r.leadPunches)",   tint: .blue)
                         StatPill(label: "Rear",    value: "\(r.rearPunches)",   tint: .orange)
                         StatPill(label: "Defense", value: "\(r.totalDefenses)", tint: .purple)
-                        if let tt = r.averageTTms {
-                            StatPill(label: "Avg TT", value: "\(Int(tt)) ms", tint: .cyan)
-                        }
                     }
 
                     HStack {

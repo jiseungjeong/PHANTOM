@@ -23,7 +23,7 @@ struct StatsView: View {
                     Text("\(stats.rearPunches.count)").fontWeight(.semibold)
                 }
                 LabeledContent("Total Defense") {
-                    Text("\(stats.totalDefenses)").fontWeight(.semibold)
+                    Text(defenseOverviewValue).fontWeight(.semibold)
                 }
                 if let dur = stats.duration {
                     LabeledContent("Duration") {
@@ -32,48 +32,23 @@ struct StatsView: View {
                 }
             }
 
-            // MARK: - Transition Time
-            Section("Transition Time") {
-                if let avg = stats.averageTTms {
-                    LabeledContent("Average TT") {
-                        Text("\(Int(avg)) ms").fontWeight(.semibold)
-                    }
-                    LabeledContent("Samples") {
-                        Text("\(stats.transitionTimes.count)").fontWeight(.semibold)
-                    }
-                } else {
-                    Text("No transitions recorded yet.")
-                        .foregroundStyle(.secondary)
-                        .font(.caption)
-                }
-                if let drift = stats.fatigueDriftMs {
-                    LabeledContent("Fatigue Drift") {
-                        HStack {
-                            Text("\(Int(drift)) ms")
-                                .fontWeight(.semibold)
-                                .foregroundStyle(drift > 50 ? .orange : .green)
-                            if drift > 50 {
-                                Image(systemName: "exclamationmark.triangle.fill")
-                                    .font(.caption)
-                                    .foregroundStyle(.orange)
-                            }
-                        }
-                    }
-                }
-            }
-
-            // MARK: - Defense Breakdown
+            // MARK: - Defense Breakdown  (from segmented single motions, Feature E)
             Section("Defense Breakdown") {
-                let bd = stats.defenseBreakdown
-                if bd.isEmpty {
-                    Text("No defense events recorded.")
+                let bd = session.motionSequence?.defenseBreakdown ?? [:]
+                if session.isSegmenting {
+                    HStack {
+                        ProgressView()
+                        Text("Analyzing session…").foregroundStyle(.secondary).font(.caption)
+                    }
+                } else if bd.isEmpty {
+                    Text("No defense motions detected this session.")
                         .foregroundStyle(.secondary)
                         .font(.caption)
                 } else {
-                    ForEach(DefenseLabel.allCases, id: \.self) { label in
+                    ForEach(DetectedMotionSequence.defenseLabelOrder, id: \.self) { label in
                         let count = bd[label] ?? 0
                         if count > 0 {
-                            LabeledContent(label.rawValue) {
+                            LabeledContent(label) {
                                 Text("\(count)").fontWeight(.semibold)
                             }
                         }
@@ -101,6 +76,56 @@ struct StatsView: View {
                 }
             }
 
+            // MARK: - Detected Single Motions (this session, Feature D)
+            if let seq = session.motionSequence {
+                Section {
+                    if session.isSegmenting {
+                        HStack {
+                            ProgressView()
+                            Text("Analyzing session…")
+                                .foregroundStyle(.secondary)
+                                .font(.caption)
+                        }
+                    } else if seq.isEmpty {
+                        Text("No motions detected.")
+                            .foregroundStyle(.secondary)
+                            .font(.caption)
+                    } else {
+                        ForEach(Array(seq.items.enumerated()), id: \.element.id) { idx, item in
+                            HStack {
+                                Text("\(idx + 1)")
+                                    .font(.caption.monospacedDigit())
+                                    .foregroundStyle(.secondary)
+                                    .frame(width: 24, alignment: .trailing)
+                                Image(systemName: "figure.boxing")
+                                    .foregroundStyle(.green)
+                                    .frame(width: 20)
+                                Text(item.label).fontWeight(.medium)
+                                Spacer()
+                                Text("\(Int((item.confidence * 100).rounded()))%")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                } header: {
+                    HStack {
+                        Text("Detected Motions (this session)")
+                        Spacer()
+                        if !seq.isEmpty {
+                            Button("Clear") {
+                                session.resetMotionSequence()
+                            }
+                            .font(.caption)
+                            .textCase(nil)
+                        }
+                    }
+                } footer: {
+                    Text("Single motions inferred from the live session, in order. Cleared independently of cumulative records.")
+                        .font(.caption2)
+                }
+            }
+
             // MARK: - Today's Cumulative Records
             Section {
                 if let today = history.todayRecord {
@@ -118,11 +143,6 @@ struct StatsView: View {
                     }
                     LabeledContent("Total Defense") {
                         Text("\(today.totalDefenses)").fontWeight(.semibold)
-                    }
-                    if let tt = today.averageTTms {
-                        LabeledContent("Avg TT (all sessions)") {
-                            Text("\(Int(tt)) ms").fontWeight(.semibold)
-                        }
                     }
                     if today.totalDurationSeconds > 0 {
                         LabeledContent("Total Duration") {
@@ -177,6 +197,13 @@ struct StatsView: View {
         } message: {
             Text("This will delete all session records for today. This cannot be undone.")
         }
+    }
+
+    /// Current-session Total Defense, counted from the segmented single-motion
+    /// sequence (Feature E). "—" until the session stops and segmentation runs.
+    private var defenseOverviewValue: String {
+        guard let count = session.detectedDefenseCount else { return "—" }
+        return "\(count)"
     }
 
     private func formatted(_ seconds: TimeInterval) -> String {

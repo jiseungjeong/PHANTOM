@@ -52,10 +52,13 @@ final class WatchConnectivityManager: NSObject, ObservableObject {
     // MARK: - Commands → Watch
 
     /// Broadcast session start with anchor timestamp so Watch aligns its clock.
-    func sendStartSession(anchorTs: TimeInterval) {
+    /// When `collectRaw` is true (Feature D) the Watch also buffers raw IMU from
+    /// the same motion callback and ships it in batches for session segmentation.
+    func sendStartSession(anchorTs: TimeInterval, collectRaw: Bool = false) {
         dispatch([
-            WatchMessageKey.action:   WatchMessageKey.sessionStart,
-            WatchMessageKey.anchorTs: anchorTs
+            WatchMessageKey.action:     WatchMessageKey.sessionStart,
+            WatchMessageKey.anchorTs:   anchorTs,
+            WatchMessageKey.collectRaw: collectRaw
         ])
     }
 

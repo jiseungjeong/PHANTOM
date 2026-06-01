@@ -47,6 +47,18 @@ venv/
 # PHANTOM app-generated runtime files (when pulled from device)
 *.tmp.csv
 
+# Raw IMU capture datasets (large, not source — jiseung_data alone is ~1 GB)
+jiho_data/
+jiseung_data/
+juho_data/
+
+# Offline analysis workspace (models/CSVs/reports/notebooks; not app source).
+# The deployed model is bundled separately at iOS/Resources/single_action_tree.json.
+analysis/
+
+# Reference papers / docs dumped at repo root
+*.pdf
+
 # IDE / editor
 .idea/
 .vscode/

@@ -24,6 +24,12 @@ final class HeadphoneMotionManager: ObservableObject {
 
     var onDefenseGestureDetected: ((DefenseLabel, Double) -> Void)?
 
+    /// Optional raw-sample hook (Feature D). See PhoneMotionManager.onRawSample.
+    var onRawSample: ((TimeSeriesRawSample) -> Void)?
+
+    /// Label stamped on emitted raw samples (ignored by segmentation).
+    var rawLabel: String = ""
+
     init() {
         isAvailable = headphoneMotion.isDeviceMotionAvailable
 
@@ -47,14 +53,24 @@ final class HeadphoneMotionManager: ObservableObject {
             }
             guard let motion else { return }
 
+            let ts = Date().timeIntervalSince1970
             // Use wall-clock relative to anchor
-            let wallTsMs = (Date().timeIntervalSince1970 - anchorTs) * 1000
+            let wallTsMs = (ts - anchorTs) * 1000
 
             self.gestureClassifier.processSample(
                 accX:  motion.userAcceleration.x,
                 gyroY: motion.rotationRate.y,
                 tsMs:  wallTsMs
             )
+
+            if let onRawSample = self.onRawSample {
+                let ua = motion.userAcceleration, grav = motion.gravity, gr = motion.rotationRate
+                onRawSample(TimeSeriesRawSample(
+                    timestamp: ts, source: "AirPods", label: self.rawLabel,
+                    accX: ua.x + grav.x, accY: ua.y + grav.y, accZ: ua.z + grav.z,
+                    gyroX: gr.x, gyroY: gr.y, gyroZ: gr.z
+                ))
+            }
         }
         isActive = true
     }
