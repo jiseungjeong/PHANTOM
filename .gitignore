@@ -55,9 +55,21 @@ juho_data/
 # App-generated data directory
 Data/
 
-# Offline analysis workspace (models/CSVs/reports/notebooks; not app source).
+# Offline analysis workspace.
+# Track source & docs (scripts, plan/todolist, README, requirements), but ignore
+# regenerable heavy artifacts (datasets, trained models, reports, caches).
 # The deployed model is bundled separately at iOS/Resources/single_action_tree.json.
-analysis/
+analysis/**/*.json
+analysis/**/*.joblib
+analysis/**/*.csv
+analysis/**/*.svg
+analysis/**/*.png
+analysis/**/reports/
+analysis/**/_*_tmp/
+analysis/**/__pycache__/
+# but DO track the small model_metadata.json (config + validation metrics record;
+# tiny, useful for reproducing/comparing model runs)
+!analysis/**/model_metadata.json
 
 # Reference papers / docs dumped at repo root
 *.pdf
