@@ -52,6 +52,9 @@ jiho_data/
 jiseung_data/
 juho_data/
 
+# App-generated data directory
+Data/
+
 # Offline analysis workspace (models/CSVs/reports/notebooks; not app source).
 # The deployed model is bundled separately at iOS/Resources/single_action_tree.json.
 analysis/
