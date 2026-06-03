@@ -1,17 +1,19 @@
 #!/usr/bin/env python3
-"""Phase 1 — 단일 동작 세그멘테이션 + feature 추출.
+"""Phase 1 — single-action segmentation + feature extraction.
 
-plan.md §2/§4, todolist Phase 1 구현.
-- 단일 동작 파일만(하이픈 없음) 대상. 5명 × 30 = 150 파일.
-- sync 점프 검출 → active peak window 5개 → 1 window = 1 sample (non-overlap).
-- motion_all feature 추출 (~490). feature 이름은 기존 build_single_repetition_dataset와 일치(iOS 정합).
-- 결과를 single_dataset.json 으로 저장(학습 단계에서 사용). QC 요약 출력.
+Implements plan.md §2/§4, todolist Phase 1.
+- Single-action files only (no hyphen). 5 subjects x 30 = 150 files.
+- Sync-jump detection -> 5 active peak windows -> 1 window = 1 sample (non-overlap).
+- Extract motion_all features (~490). Feature names match the existing
+  build_single_repetition_dataset (iOS consistency).
+- Save to single_dataset.json (used by the training stage). Print a QC summary.
 
-기존 검증된 함수(extract_features / motion_envelope / choose_five_peaks /
-windows_from_peaks / features_for_window)를 재사용하되, build_samples 는 거치지 않는다.
-(이유: build_samples 는 하위폴더 glob 미지원 + rbc.subject_from_name 이 새 5명을 모름.)
+Reuses the existing verified functions (extract_features / motion_envelope /
+choose_five_peaks / windows_from_peaks / features_for_window) but does NOT go
+through build_samples. (Reason: build_samples lacks subfolder glob support, and
+rbc.subject_from_name does not know the new 5 subjects.)
 
-상대경로 기준(Q4). 실행: python3 analysis/five_subject_active_window_classifier/phase1_segment.py
+Relative paths (Q4). Run: python3 analysis/five_subject_active_window_classifier/phase1_segment.py
 """
 
 from __future__ import annotations
@@ -24,7 +26,7 @@ from pathlib import Path
 
 import numpy as np
 
-# ── 레포 루트 & 기존 스크립트 재사용 (Q4: 경로 하드코딩 회피) ───────────────────
+# ── Repo root & reuse of existing scripts (Q4: avoid hardcoded paths) ───────────
 THIS = Path(__file__).resolve()
 REPO = THIS.parents[2]
 DATA_DIR = REPO / "Data"
@@ -33,7 +35,7 @@ LEGACY = REPO / "analysis" / "jiho_juho_shim_active_window_classifier_minimal"
 
 sys.path.insert(0, str(LEGACY))
 import rule_base_classifier as rbc
-# build_peak_repetition_dataset 의 옛 패키지경로 import 우회 (파일 수정 없이)
+# Work around build_peak_repetition_dataset's old package-path import (no file edit)
 sys.modules["analysis"] = types.ModuleType("analysis")
 sys.modules["analysis.active_window_classifier_minimal"] = types.ModuleType("analysis.active_window_classifier_minimal")
 sys.modules["analysis.active_window_classifier_minimal.rule_base_classifier"] = rbc
@@ -47,7 +49,7 @@ BIN_S = bp.BIN_S
 
 
 def _gap_cv(idxs, times):
-    """선택된 피크들의 간격 변동계수(작을수록 등간격)."""
+    """Coefficient of variation of the gaps between selected peaks (smaller = more even spacing)."""
     ts = sorted(float(times[i]) for i in idxs)
     gaps = np.diff(ts)
     m = float(np.mean(gaps))
@@ -55,31 +57,32 @@ def _gap_cv(idxs, times):
 
 
 def _height_cv(idxs, envelope):
-    """선택된 피크들의 높이 변동계수(작을수록 높이 균일).
-    진짜 5반복은 세기가 고르고, 가짜(점프잔재=너무 큼, 잡음=너무 작음)는 높이가 튄다."""
+    """CV of the heights of selected peaks (smaller = more uniform height).
+    A real 5-rep set has even intensity; fakes (jump residue = too big, noise = too small) spike in height."""
     hs = np.array([float(envelope[i]) for i in idxs])
     m = float(hs.mean())
     return float(hs.std() / m) if m > 0 else 9.99
 
 
 def uniform_windows(windows, duration):
-    """개선5: 크롭 길이 균일화. 파일 내 윈도우 폭의 대표값을 구해 모든 윈도우를
-    각자의 peak_time_s 중심으로 같은 폭으로 재설정.
+    """Improvement 5: uniform crop width. Compute a representative window width for the
+    file and reset every window to the same width, centered on its peak_time_s.
 
-    폭은 '넉넉하게': 적게 vs 많이 중 많이가 나음(동작 잘림이 더 해로움) → 중앙값이
-    아니라 **75퍼센타일 폭**을 대표값으로 써 약간 길게 자른다. 단 이웃 피크 중간점·
-    파일 범위로 clamp 해 겹침/이탈은 막는다."""
+    Width is 'generous': between cropping too little vs too much, too much is better
+    (cutting off the action is more harmful) -> use the **75th-percentile width**, not
+    the median, to crop a bit longer. Clamp to the neighbor-peak midpoint and the file
+    range to prevent overlap/overrun."""
     if not windows:
         return windows
     widths = [w["end_s"] - w["start_s"] for w in windows]
-    half = float(np.percentile(widths, 75)) / 2.0     # 중앙값보다 넉넉 (많이 잡기)
+    half = float(np.percentile(widths, 75)) / 2.0     # more generous than median (crop wider)
     ws = sorted(windows, key=lambda w: w["peak_time_s"])
     out = []
     for idx, w in enumerate(ws):
         pt = w["peak_time_s"]
         lo = pt - half
         hi = pt + half
-        # 이웃 피크와 겹침 방지: 중간점으로 제한
+        # prevent overlap with neighbor peaks: clamp to the midpoint
         if idx > 0:
             lo = max(lo, (ws[idx - 1]["peak_time_s"] + pt) / 2.0)
         if idx < len(ws) - 1:
@@ -92,19 +95,19 @@ def uniform_windows(windows, duration):
     return out
 
 
-MAX_REPS = SINGLE_REPETITIONS      # 5 (정상 반복 수)
-MIN_REPS = 4                        # 진짜 봉우리가 4개면 4샘플로 살림. 3개 이하 invalid.
+MAX_REPS = SINGLE_REPETITIONS      # 5 (normal repetition count)
+MIN_REPS = 4                        # if there are 4 real peaks, keep as 4 samples. <=3 is invalid.
 
 
 def choose_real_peaks(times, envelope, duration, max_reps=MAX_REPS):
-    """floor 강화(개선1) + 간격 규칙성(개선3) + 유연 반복수.
+    """Strengthened floor (improvement 1) + gap regularity (improvement 3) + flexible rep count.
 
-    개선1: floor 미만 봉우리(점프 잔재·잡음)는 끝까지 제외.
-    개선3: 6개+ 후보면 '높이 우선'이 아니라 **간격이 가장 일정한 조합**을 골라
-           점프 잔재·리듬 깨는 가짜 피크를 배제.
-    유연 반복수: 진짜 문제는 '가짜 피크가 끼는 6개+'이지 '진짜 4번 한 것'이 아니다.
-           → floor 통과 봉우리(real)가 6개+면 규칙성으로 5개 선택, 정확히 5면 그대로,
-             4개면 4샘플로 살림, **3개 이하만 invalid**.
+    Improvement 1: peaks below the floor (jump residue / noise) are excluded outright.
+    Improvement 3: with 6+ candidates, instead of 'tallest first', pick the **most
+           evenly-spaced combination** to reject jump residue and rhythm-breaking fake peaks.
+    Flexible rep count: the real problem is 'fake peaks among 6+', not 'genuinely did it 4 times'.
+           -> if real (floor-passing) peaks are 6+, select 5 by regularity; exactly 5 -> use as is;
+             4 -> keep as 4 samples; **only <=3 is invalid**.
     """
     peaks = bp.local_peak_indices(envelope)
     if not peaks:
@@ -117,21 +120,22 @@ def choose_real_peaks(times, envelope, duration, max_reps=MAX_REPS):
     if n < MIN_REPS:
         return [], {"status": "too_few_real_peaks", "real_peaks": n, "floor": floor}
 
-    # 목표 개수: 4~5 사이에서 real 수에 맞춤 (6개+ 면 5로 줄임)
+    # target count: match real count within 4~5 (6+ -> reduce to 5)
     target = min(max_reps, n) if n <= max_reps else max_reps
-    # 최소간격은 '잡음 쌍둥이 피크' 제거 수준(0.30s)으로만 둔다. 진짜 동작 간격이
-    # 0.6s 수준으로 빠를 수 있어 큰 min_sep 은 정상 파일을 떨군다(no_valid_combo).
-    # 촘촘한 가짜는 간격 규칙성(gapCV) 점수가 알아서 배제하므로 여기선 느슨하게.
+    # min separation is only at the 'noise twin-peak' removal level (0.30s). A real action
+    # gap can be as fast as ~0.6s, so a large min_sep would drop normal files (no_valid_combo).
+    # Tight fakes are rejected by gap regularity (gapCV), so keep this loose here.
     min_sep = max(1, int(round(0.30 / BIN_S)))
 
     if n == target:
         sel, gcv = real, _gap_cv(real, times)
     else:
-        # n > target (6개+ → target개로): best 조합 선택. key = 작을수록 좋음.
-        #   gapCV(주)         : 간격 등간격
-        #   0.3*heightCV(보조): 높이 균일 (점프잔재 큼·잡음 작음 배제)
-        #   0.1*edge(약보조)  : 가장자리 피크 회피(개선6) — 점프잔재(맨앞)·꼬리흔들림(맨뒤)
-        #                       을 살짝 불리하게. 진짜 앞쪽 반복은 안 밀어내도록 약하게.
+        # n > target (6+ -> target): pick the best combination. key = smaller is better.
+        #   gapCV (main)        : even spacing
+        #   0.3*heightCV (aux)  : uniform height (reject jump residue=big, noise=small)
+        #   0.1*edge (weak aux) : avoid edge peaks (improvement 6) — penalize jump residue
+        #                         (front) and tail wobble (back) slightly. Weak, so it does not
+        #                         push out genuine early reps.
         from itertools import combinations
         n_bins = len(envelope)
         best, best_key, gcv_sel = None, None, 9.99
@@ -140,8 +144,8 @@ def choose_real_peaks(times, envelope, duration, max_reps=MAX_REPS):
                 continue
             gcv = _gap_cv(combo, times)
             hcv = _height_cv(combo, envelope)
-            # edge_penalty: 각 피크의 가장자리 근접도 평균 (0=완전중앙, 1=양끝).
-            # |pos-0.5|*2 → 중앙0, 양끝1. 가장자리일수록 페널티 커짐.
+            # edge_penalty: average edge-proximity of each peak (0=dead center, 1=both ends).
+            # |pos-0.5|*2 -> center 0, ends 1. The closer to an edge, the bigger the penalty.
             edge_penalty = float(np.mean([2.0 * abs(i / max(1, n_bins - 1) - 0.5) for i in combo]))
             key = gcv + 0.3 * hcv + 0.1 * edge_penalty
             if best_key is None or key < best_key:
@@ -156,7 +160,7 @@ def choose_real_peaks(times, envelope, duration, max_reps=MAX_REPS):
 
 
 def subject_from_path(path: Path) -> str:
-    """폴더명 기준(jeong_data → JEONG). 기존 rbc.SUBJECTS 가 새 5명을 모르므로 직접."""
+    """Based on the folder name (jeong_data -> JEONG). Done directly since rbc.SUBJECTS does not know the new 5."""
     return path.parent.name.replace("_data", "").upper()
 
 
@@ -176,7 +180,7 @@ def label_from_path(path: Path) -> str | None:
 
 def main() -> None:
     csvs = sorted(p for p in DATA_DIR.glob("*/*.csv") if "_Watch_" not in p.name)
-    print(f"# Phase 1 — 단일 동작 세그멘테이션")
+    print(f"# Phase 1 — single-action segmentation")
     print(f"DATA_DIR = {DATA_DIR}")
 
     samples: list[dict] = []
@@ -189,34 +193,34 @@ def main() -> None:
         label = label_from_path(path)
         if label is None:
             invalid.append({"file": path.name, "reason": "label_parse_fail"}); continue
-        if "-" in label:                                  # 콤보 → 1단계 제외
+        if "-" in label:                                  # combo -> excluded from stage 1
             skipped_combo += 1; continue
         subject = subject_from_path(path)
 
-        # whole-file feature + jump 검출 (P00 fallback 불필요: 5명에 P00 없음)
+        # whole-file feature + jump detection (no P00 fallback needed: the 5 subjects have no P00)
         whole_features, whole_meta = rbc.extract_features(path)
         if whole_features is None:
             invalid.append({"file": path.name, "label": label, "subject": subject,
                             "reason": "extract_features_none", "meta": whole_meta}); continue
         signature = rbc.source_signature(whole_meta)
-        if signature != FULL_SENSOR:                      # full-sensor만
+        if signature != FULL_SENSOR:                      # full-sensor only
             skipped_signature += 1
             invalid.append({"file": path.name, "label": label, "subject": subject,
                             "reason": f"signature={signature}"}); continue
 
-        data = rbc.read_csv_sources(path)                 # source별 시간축 데이터(D3: timestamp 기반)
+        data = rbc.read_csv_sources(path)                 # per-source time-axis data (D3: timestamp-based)
         jump_cut_s = float(whole_meta.get("jump_cut_s", 0.0))
         times, envelope, duration, env_meta = bp.motion_envelope(data, jump_cut_s)
         if len(envelope) == 0:
             invalid.append({"file": path.name, "label": label, "subject": subject,
                             "reason": env_meta.get("status", "no_envelope")}); continue
 
-        peaks, peak_meta = choose_real_peaks(times, envelope, duration)   # 개선1+3+유연반복
-        if len(peaks) < MIN_REPS:                          # 4·5개 허용, 3개 이하만 invalid
+        peaks, peak_meta = choose_real_peaks(times, envelope, duration)   # improvements 1+3+flexible reps
+        if len(peaks) < MIN_REPS:                          # allow 4 or 5, only <=3 is invalid
             invalid.append({"file": path.name, "label": label, "subject": subject,
                             "reason": f"{peak_meta.get('status')}(real={peak_meta.get('real_peaks')})"}); continue
         windows = bp.windows_from_peaks(times, envelope, peaks, duration)
-        windows = uniform_windows(windows, duration)       # 개선5: 길이 균일(넉넉)
+        windows = uniform_windows(windows, duration)       # improvement 5: uniform width (generous)
 
         coverage_s = sum(max(0.0, w["end_s"] - w["start_s"]) for w in windows)
         qc_rows.append({
@@ -234,7 +238,7 @@ def main() -> None:
                 base={
                     "single_repetition_sample": 1.0,
                     "repetition_index": float(rep_idx),
-                    "repetition_count": float(len(windows)),   # 실제 선택 수(4 or 5)
+                    "repetition_count": float(len(windows)),   # actual selected count (4 or 5)
                     "whole_file_duration_s": duration,
                     "active_peak_time_s": win["peak_time_s"],
                     "active_peak_score": win["peak_score"],
@@ -252,11 +256,11 @@ def main() -> None:
                 "features": rep_features,
             })
 
-    # ── feature 이름 집합 (motion_all) ────────────────────────────────────────
+    # ── Feature name set (motion_all) ─────────────────────────────────────────
     all_names = sorted({k for s in samples for k in s["features"].keys()})
     motion_all = [n for n in all_names if "present" not in n and "raw_n" not in n and n != "total_rows"]
 
-    # ── 저장 ──────────────────────────────────────────────────────────────────
+    # ── Save ────────────────────────────────────────────────────────────────────
     out_path = OUT_DIR / "single_dataset.json"
     out_path.write_text(json.dumps({
         "feature_names_all": all_names,
@@ -264,29 +268,29 @@ def main() -> None:
         "samples": samples,
     }, ensure_ascii=False))
 
-    # ── QC 출력 ───────────────────────────────────────────────────────────────
-    print(f"\n## 결과")
-    print(f"  단일 파일 처리 → 샘플: {len(samples)}  (기대 150파일 × 5 = 750)")
-    print(f"  콤보 제외: {skipped_combo}  / signature 제외: {skipped_signature}  / invalid: {len(invalid)}")
-    print(f"  피험자별 샘플: {dict(Counter(s['subject'] for s in samples))}")
-    print(f"  라벨별 샘플:   {dict(sorted(Counter(s['label'] for s in samples).items()))}")
+    # ── QC output ─────────────────────────────────────────────────────────────
+    print(f"\n## Result")
+    print(f"  single files processed -> samples: {len(samples)}  (expected 150 files x 5 = 750)")
+    print(f"  combo excluded: {skipped_combo}  / signature excluded: {skipped_signature}  / invalid: {len(invalid)}")
+    print(f"  samples per subject: {dict(Counter(s['subject'] for s in samples))}")
+    print(f"  samples per label:   {dict(sorted(Counter(s['label'] for s in samples).items()))}")
     files_used = len({s['file'] for s in samples})
     n5 = sum(1 for q in qc_rows if q["n_peaks"] == 5)
     n4 = sum(1 for q in qc_rows if q["n_peaks"] == 4)
-    print(f"  사용 파일 수: {files_used}  (5피크 {n5} + 4피크 {n4})")
-    print(f"  feature 수: 전체 {len(all_names)} / motion_all {len(motion_all)}")
+    print(f"  files used: {files_used}  (5-peak {n5} + 4-peak {n4})")
+    print(f"  feature count: all {len(all_names)} / motion_all {len(motion_all)}")
     if invalid:
-        print(f"  ⚠️ invalid 사유: {dict(Counter(i['reason'].split('(')[0] for i in invalid))}")
+        print(f"  (!) invalid reasons: {dict(Counter(i['reason'].split('(')[0] for i in invalid))}")
 
-    # 윈도우 커버리지 분포 (세그멘테이션 건강성)
+    # window-coverage distribution (segmentation health)
     if qc_rows:
         cov = np.array([q["coverage_pct"] for q in qc_rows])
         dur = np.array([q["duration_s"] for q in qc_rows])
-        print(f"  커버리지%: median={np.median(cov):.2f} min={cov.min():.2f} max={cov.max():.2f}")
-        print(f"  파일 duration(s): median={np.median(dur):.1f} min={dur.min():.1f} max={dur.max():.1f}")
+        print(f"  coverage%: median={np.median(cov):.2f} min={cov.min():.2f} max={cov.max():.2f}")
+        print(f"  file duration(s): median={np.median(dur):.1f} min={dur.min():.1f} max={dur.max():.1f}")
 
-    print(f"\n  저장 → {out_path}  ({out_path.stat().st_size/1024:.0f} KB)")
-    print("# 끝.")
+    print(f"\n  saved -> {out_path}  ({out_path.stat().st_size/1024:.0f} KB)")
+    print("# done.")
 
 
 if __name__ == "__main__":

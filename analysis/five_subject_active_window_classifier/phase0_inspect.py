@@ -1,17 +1,18 @@
 #!/usr/bin/env python3
-"""Phase 0 — 데이터 점검 (read-only).
+"""Phase 0 — data inspection (read-only).
 
-plan.md / todolist.md 의 Phase 0 항목을 실측한다. 모델 학습 없음, 기존 파일 수정 없음.
-점검 항목:
-  - 인벤토리: 피험자별·라벨별 파일 수 (단일/연속 분리)
-  - C0: 세션별 AirPods 유효성 (행 개수·신호 크기) — full-sensor 가정 검증
-  - Q5: full-sensor 아닌 세션 제외 규모 (사유·피험자별, silent drop 금지)
-  - D2: 단일 파일 피크 검출 수 (기대 5 대비)
-  - D4: 라벨 문자열 일관성 (피험자 간 동일 집합인가)
-  - 클래스 분포 (불균형)
-  - D1: 콤보 파일 피크 적중률 (검출 피크 수 == 콤보 길이?), 방어 누락 경향
+Measures the Phase 0 items in plan.md / todolist.md. No model training, no edits
+to existing files.
+Inspection items:
+  - inventory: file counts per subject/label (single vs combo separated)
+  - C0: per-session AirPods validity (row count, signal magnitude) — verify the full-sensor assumption
+  - Q5: how many sessions are dropped for not being full-sensor (by reason / by subject, no silent drop)
+  - D2: peak count detected per single file (vs expected 5)
+  - D4: label-string consistency (is the set identical across subjects?)
+  - class distribution (imbalance)
+  - D1: combo-file peak hit rate (detected peak count == combo length?), defense-miss tendency
 
-경로는 상대경로 기준(Q4). 레포 루트에서 실행: python3 analysis/five_subject_active_window_classifier/phase0_inspect.py
+Relative paths (Q4). Run from repo root: python3 analysis/five_subject_active_window_classifier/phase0_inspect.py
 """
 
 from __future__ import annotations
@@ -23,17 +24,17 @@ from pathlib import Path
 
 import numpy as np
 
-# ── 레포 루트 & 기존 스크립트 재사용 (경로 하드코딩 회피 = Q4) ──────────────────
+# ── Repo root & reuse of existing scripts (avoid hardcoded paths = Q4) ──────────
 THIS = Path(__file__).resolve()
 REPO = THIS.parents[2]                       # .../PHANTOM
 DATA_DIR = REPO / "Data"
 LEGACY = REPO / "analysis" / "jiho_juho_shim_active_window_classifier_minimal"
 
 sys.path.insert(0, str(LEGACY))
-import rule_base_classifier as rbc            # 단독 import OK
+import rule_base_classifier as rbc            # standalone import OK
 
-# build_peak_repetition_dataset 는 옛 패키지경로를 하드코딩 import 한다.
-# 그 이름으로 현재 모듈들을 미리 등록해 우회(파일 수정 없이).
+# build_peak_repetition_dataset hardcodes imports of the old package path.
+# Pre-register the current modules under those names to work around it (no file edits).
 pkg_a = types.ModuleType("analysis")
 pkg_b = types.ModuleType("analysis.active_window_classifier_minimal")
 sys.modules["analysis"] = pkg_a
@@ -44,22 +45,22 @@ sys.modules["analysis.active_window_classifier_minimal.build_single_repetition_d
 import build_peak_repetition_dataset as bp
 
 SOURCES = rbc.SOURCES                         # ('Watch','iPhone','AirPods')
-MIN_VALID_ROWS = 5                            # 한 기기가 '유효'로 간주되는 최소 행수
+MIN_VALID_ROWS = 5                            # min rows for a device to count as 'valid'
 
 
 def subject_from_path(path: Path) -> str:
-    """폴더명(jeong_data) 기준 — 기존 rbc.SUBJECTS 상수가 새 5명을 모르므로 직접 파싱."""
+    """Based on the folder name (jeong_data) — parse directly since rbc.SUBJECTS does not know the new 5."""
     return path.parent.name.replace("_data", "").upper()
 
 
 def label_from_path(path: Path) -> str | None:
-    """파일명에서 피험자 접두어·타임스탬프 제거 후 라벨만. rbc.SUBJECTS 의존 회피."""
+    """Strip the subject prefix and timestamp from the filename, leaving only the label. Avoids rbc.SUBJECTS."""
     import re
     m = re.match(r"^(.*)_(\d{8})_(\d{6})$", path.stem)
     if not m:
         return None
     parts = m.group(1).split("_")
-    # 첫 토큰이 대문자 피험자명이면 제거 (JEONG_, SEUNG_ 등 포함)
+    # Drop the first token if it is an uppercase subject name (includes JEONG_, SEUNG_, etc.)
     if parts and parts[0].isupper() and parts[0].isalpha():
         parts = parts[1:]
     if parts and parts[-1] == "Watch":
@@ -77,7 +78,7 @@ def combo_len(label: str) -> int:
 
 
 def detect_peaks(data: dict, expected: int) -> tuple[int, dict]:
-    """jump_cut 검출 → envelope → 피크 검출. (검출수, meta) 반환."""
+    """jump_cut detection -> envelope -> peak detection. Returns (count, meta)."""
     try:
         jump_cut_s, _ = rbc.detect_jump_cut(data)
         times, envelope, duration, env_meta = bp.motion_envelope(data, jump_cut_s)
@@ -85,7 +86,7 @@ def detect_peaks(data: dict, expected: int) -> tuple[int, dict]:
             return 0, {"status": env_meta.get("status", "no_envelope")}
         sel, meta = bp.choose_five_peaks(times, envelope, duration, repetitions=expected)
         return len(sel), meta
-    except Exception as e:                     # 점검이므로 예외는 집계만
+    except Exception as e:                     # inspection only — just tally exceptions
         return -1, {"status": f"error:{type(e).__name__}:{e}"}
 
 
@@ -93,11 +94,11 @@ def main() -> None:
     full_csvs = sorted(
         p for p in DATA_DIR.glob("*/*.csv") if "_Watch_" not in p.name
     )
-    print(f"# Phase 0 데이터 점검")
+    print(f"# Phase 0 data inspection")
     print(f"DATA_DIR = {DATA_DIR}")
-    print(f"full-sensor 후보 파일(워치파생 제외): {len(full_csvs)}\n")
+    print(f"full-sensor candidate files (watch-derived excluded): {len(full_csvs)}\n")
 
-    # 집계 버킷
+    # tally buckets
     by_subject = Counter()
     by_label = Counter()
     single_files, combo_files = [], []
@@ -123,7 +124,7 @@ def main() -> None:
         present = [s for s in SOURCES if counts.get(s, 0) >= MIN_VALID_ROWS]
         signature = "+".join(sorted(present))
 
-        # C0 / Q5: full-sensor(3기기) 충족 여부
+        # C0 / Q5: whether full-sensor (3 devices) is satisfied
         is_full = set(present) == set(SOURCES)
         airpods_report.append((subject, label, counts["AirPods"], counts["Watch"], counts["iPhone"], signature))
         if not is_full:
@@ -140,89 +141,89 @@ def main() -> None:
             n, meta = detect_peaks(data, bp.SINGLE_REPETITIONS)
             single_peak_rows.append((subject, label, n, meta.get("status", "ok")))
 
-    # ── 출력 ─────────────────────────────────────────────────────────────────
-    print("## 1. 인벤토리 (피험자별 full-sensor 후보)")
+    # ── Output ─────────────────────────────────────────────────────────────────
+    print("## 1. Inventory (full-sensor candidates per subject)")
     for s in sorted(by_subject):
-        print(f"  {s:8s}: {by_subject[s]:3d}  (단일+연속 합)")
-    print(f"  단일 파일: {len(single_files)} / 연속 파일: {len(combo_files)}\n")
+        print(f"  {s:8s}: {by_subject[s]:3d}  (single+combo total)")
+    print(f"  single files: {len(single_files)} / combo files: {len(combo_files)}\n")
 
-    print("## 2. C0/Q5 — 제외 규모 (full-sensor 미충족 등)")
-    print(f"  제외 총: {len(excluded)}")
+    print("## 2. C0/Q5 — drop count (not full-sensor, etc.)")
+    print(f"  total dropped: {len(excluded)}")
     reasons = Counter(r for _, r in excluded)
     for r, c in reasons.most_common():
         print(f"    {c:3d}  {r}")
-    # 제외 파일 피험자별
+    # dropped files by subject
     exc_subj = Counter(f.split("_")[0] for f, _ in excluded)
     if exc_subj:
-        print("  제외 피험자별:", dict(exc_subj))
+        print("  dropped by subject:", dict(exc_subj))
     print()
 
-    print("## 3. C0 — AirPods 행 개수 분포 (전체 후보)")
+    print("## 3. C0 — AirPods row-count distribution (all candidates)")
     air = np.array([r[2] for r in airpods_report], dtype=float)
     wat = np.array([r[3] for r in airpods_report], dtype=float)
     iph = np.array([r[4] for r in airpods_report], dtype=float)
     def stat(name, arr):
         print(f"  {name:8s} min={arr.min():.0f} p25={np.percentile(arr,25):.0f} "
               f"median={np.median(arr):.0f} p75={np.percentile(arr,75):.0f} max={arr.max():.0f} "
-              f"  (<{MIN_VALID_ROWS}행: {(arr<MIN_VALID_ROWS).sum()}개, ==0: {(arr==0).sum()}개)")
+              f"  (<{MIN_VALID_ROWS} rows: {(arr<MIN_VALID_ROWS).sum()}, ==0: {(arr==0).sum()})")
     stat("AirPods", air); stat("Watch", wat); stat("iPhone", iph)
-    # AirPods가 약한(하위) 세션 피험자별
+    # sessions with weak (low) AirPods, by subject
     weak_air = Counter(r[0] for r in airpods_report if r[2] < 50)
-    print(f"  AirPods<50행 세션 피험자별: {dict(weak_air) if weak_air else '없음'}\n")
+    print(f"  AirPods<50-row sessions by subject: {dict(weak_air) if weak_air else 'none'}\n")
 
-    print("## 4. D4 — 라벨 문자열 일관성 (피험자 간)")
+    print("## 4. D4 — label-string consistency (across subjects)")
     all_labels = set().union(*label_set_by_subject.values()) if label_set_by_subject else set()
-    print(f"  전체 고유 라벨: {len(all_labels)} (단일 {sum(not is_combo(l) for l in all_labels)} + 연속 {sum(is_combo(l) for l in all_labels)})")
+    print(f"  total unique labels: {len(all_labels)} (single {sum(not is_combo(l) for l in all_labels)} + combo {sum(is_combo(l) for l in all_labels)})")
     for s in sorted(label_set_by_subject):
         missing = all_labels - label_set_by_subject[s]
         if missing:
-            print(f"  ⚠️ {s} 누락 라벨({len(missing)}): {sorted(missing)}")
+            print(f"  (!) {s} missing labels ({len(missing)}): {sorted(missing)}")
     if all(label_set_by_subject[s] == all_labels for s in label_set_by_subject):
-        print("  ✅ 모든 피험자가 동일 라벨 집합 보유\n")
+        print("  OK: every subject has the identical label set\n")
     else:
         print()
 
-    print("## 5. 클래스 분포 (단일 동작만)")
+    print("## 5. Class distribution (single actions only)")
     single_labels = Counter(label_from_path(p) for p in single_files)
     for l in sorted(single_labels):
         print(f"  {l:16s}: {single_labels[l]}")
     if single_labels:
         vals = list(single_labels.values())
-        print(f"  → min={min(vals)} max={max(vals)} (불균형비 {max(vals)/min(vals):.2f})\n")
+        print(f"  -> min={min(vals)} max={max(vals)} (imbalance ratio {max(vals)/min(vals):.2f})\n")
 
-    print("## 6. D2 — 단일 파일 피크 검출 수 (기대 5)")
+    print("## 6. D2 — peaks detected per single file (expected 5)")
     npk = Counter(r[2] for r in single_peak_rows)
     for k in sorted(npk):
-        flag = "" if k == bp.SINGLE_REPETITIONS else "  ⚠️"
-        print(f"  피크 {k}개: {npk[k]} 파일{flag}")
+        flag = "" if k == bp.SINGLE_REPETITIONS else "  (!)"
+        print(f"  {k} peaks: {npk[k]} files{flag}")
     bad = [r for r in single_peak_rows if r[2] != bp.SINGLE_REPETITIONS]
-    print(f"  → 기대(5) 불일치: {len(bad)}/{len(single_peak_rows)}")
+    print(f"  -> mismatch vs expected (5): {len(bad)}/{len(single_peak_rows)}")
     if bad[:8]:
         for r in bad[:8]:
-            print(f"     {r[0]}/{r[1]}: {r[2]}개 ({r[3]})")
+            print(f"     {r[0]}/{r[1]}: {r[2]} ({r[3]})")
     print()
 
-    print("## 7. D1 — 콤보 피크 적중률 (검출수 == 콤보길이?)")
+    print("## 7. D1 — combo peak hit rate (detected count == combo length?)")
     if combo_peak_rows:
         hit = sum(1 for r in combo_peak_rows if r[4])
-        print(f"  적중(검출==길이): {hit}/{len(combo_peak_rows)} = {hit/len(combo_peak_rows)*100:.1f}%")
-        # 콤보 길이별
+        print(f"  hit (detected==length): {hit}/{len(combo_peak_rows)} = {hit/len(combo_peak_rows)*100:.1f}%")
+        # by combo length
         by_len = defaultdict(lambda: [0, 0])
         for r in combo_peak_rows:
             by_len[r[2]][0] += 1
             by_len[r[2]][1] += int(r[4])
         for L in sorted(by_len):
             tot, h = by_len[L]
-            print(f"    {L}동작 콤보: 적중 {h}/{tot} = {h/tot*100:.1f}%")
-        # 방어 포함 콤보 vs 펀치만 콤보 적중률 (방어 누락 경향)
+            print(f"    {L}-action combo: hit {h}/{tot} = {h/tot*100:.1f}%")
+        # combos with defense vs punch-only (defense-miss tendency)
         def has_def(lbl): return any(k in lbl for k in ("Slip", "Roll"))
         defc = [r for r in combo_peak_rows if has_def(r[1])]
         punc = [r for r in combo_peak_rows if not has_def(r[1])]
         if defc:
-            print(f"    방어 포함 콤보 적중: {sum(r[4] for r in defc)}/{len(defc)} = {sum(r[4] for r in defc)/len(defc)*100:.1f}%")
+            print(f"    combos with defense hit: {sum(r[4] for r in defc)}/{len(defc)} = {sum(r[4] for r in defc)/len(defc)*100:.1f}%")
         if punc:
-            print(f"    펀치만 콤보 적중:   {sum(r[4] for r in punc)}/{len(punc)} = {sum(r[4] for r in punc)/len(punc)*100:.1f}%")
-    print("\n# 끝.")
+            print(f"    punch-only combos hit:   {sum(r[4] for r in punc)}/{len(punc)} = {sum(r[4] for r in punc)/len(punc)*100:.1f}%")
+    print("\n# done.")
 
 
 if __name__ == "__main__":

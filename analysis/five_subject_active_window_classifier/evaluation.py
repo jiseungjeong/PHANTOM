@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
-"""Phase 2 — 평가 프로토콜 (재사용 가능한 평가 엔진).
+"""Phase 2 — evaluation protocol (reusable evaluation engine).
 
-plan.md §6 / todolist Phase 2 구현. 모델-agnostic: Phase 3 가 여러 모델을
-이 엔진에 넣어 공정 비교한다.
+Implements plan.md §6 / todolist Phase 2. Model-agnostic: Phase 3 plugs multiple
+models into this engine for fair comparison.
 
-제공 프로토콜:
-  - LOSO            : 한 피험자 통째 제외 → 그 사람으로 테스트. per-subject acc/F1 + min~max
-  - file_grouped_cv : 같은 녹화(파일)는 한 fold 에만 (보조 지표, within-cohort 상한)
-  - nested_loso     : outer=LOSO 평가, inner=남은 피험자로 모델/하이퍼파라미터 선택
-                      ⭐ A2: inner 도 피험자/파일 단위 분할(누설 차단). random k-fold 금지.
-  - sample-level random k-fold 는 의도적으로 제공하지 않음 (반복 5샘플 누설).
+Provided protocols:
+  - LOSO            : leave one whole subject out -> test on that person. per-subject acc/F1 + min~max
+  - file_grouped_cv : a recording (file) stays in one fold only (auxiliary metric, within-cohort upper bound)
+  - nested_loso     : outer=LOSO evaluation, inner=model/hyperparameter selection on the remaining subjects
+                      A2: inner is also split by subject/file (no leakage). No random k-fold.
+  - sample-level random k-fold is intentionally NOT provided (leaks the 5 repetition samples).
 
-metric: accuracy + macro-F1 + per-class F1 + confusion(라벨순서 고정).
+metric: accuracy + macro-F1 + per-class F1 + confusion (fixed label order).
 
-이 파일은 함수 모음이며, 직접 실행하면 baseline(KNN n=1)으로 엔진 동작을 검증한다.
-실행: python3 analysis/five_subject_active_window_classifier/evaluation.py
+This file is a collection of functions; running it directly verifies the engine with the baseline (KNN n=1).
+Run: python3 analysis/five_subject_active_window_classifier/evaluation.py
 """
 
 from __future__ import annotations
@@ -30,29 +30,32 @@ from sklearn.metrics import accuracy_score, f1_score, confusion_matrix
 THIS = Path(__file__).resolve()
 DATASET = THIS.parent / "single_dataset.json"
 
-# ⭐ 환경 정책:
-#   - JEONG·SEUNG 은 동일인의 두 환경 측정 (JEONG=실내·맨발 / SEUNG=실외·신발).
-#   - 나머지(JIHO·JUHO·SHIM)는 모두 신발. 앱 실사용 환경(신발)과 일관성을 위해
-#     학습/평가 코호트는 신발 4명(SEUNG·JIHO·JUHO·SHIM)으로 한다.
-#   - JEONG(맨발)은 학습/평가에서 제외하고 '환경 robustness 테스트' 전용으로 보관.
-#     → 이로써 (a) 동일인 누설 차단, (b) 환경 일관, (c) fold 균등(각 25%) 모두 달성.
-TRAIN_SUBJECTS = ("SEUNG", "JIHO", "JUHO", "SHIM")   # 신발, 일관 환경
-HOLDOUT_ENV_SUBJECT = "JEONG"                         # 맨발, robustness 분석 전용
+# Environment policy (auto-extends when subjects are added):
+#   - JEONG and SEUNG are the same person measured in two environments
+#     (JEONG=indoor/barefoot, SEUNG=outdoor/shoes).
+#   - Only JEONG (barefoot) is excluded from train/eval and kept for the
+#     'environment robustness test'.
+#   - All other subjects (SEUNG, JIHO, JUHO, SHIM + new additions) auto-join the shoe cohort.
+#     -> Just add a new subject folder (Data/<name>_data) and it joins the cohort (no hardcoding).
+#   - Note: new subjects must also be measured in the 'shoes' environment for consistency
+#     (see the measurement guide).
+HOLDOUT_ENV_SUBJECTS = ("JEONG",)                     # different environment (barefoot etc.) — excluded from cohort
 
 
 def split_cohort(X, y, subjects, files):
-    """신발 4명(학습/평가) 과 JEONG(환경 holdout)을 분리해 반환."""
-    train_mask = np.isin(subjects, TRAIN_SUBJECTS)
-    env_mask = subjects == HOLDOUT_ENV_SUBJECT
+    """Return the train/eval cohort (everyone except HOLDOUT) and the environment holdout (JEONG).
+    As subjects grow, everyone except HOLDOUT auto-joins the cohort."""
+    env_mask = np.isin(subjects, HOLDOUT_ENV_SUBJECTS)
+    train_mask = ~env_mask
     cohort = (X[train_mask], y[train_mask], subjects[train_mask], files[train_mask])
     env = (X[env_mask], y[env_mask], subjects[env_mask], files[env_mask])
     return cohort, env
 
 
-# ── 데이터 로드 ────────────────────────────────────────────────────────────────
+# ── Data loading ──────────────────────────────────────────────────────────────
 
 def load_dataset(path: Path = DATASET):
-    """single_dataset.json → (X, y, subjects, files, feature_names, labels)."""
+    """single_dataset.json -> (X, y, subjects, files, feature_names, labels)."""
     d = json.loads(path.read_text())
     feats = d["feature_names_motion_all"]
     samples = d["samples"]
@@ -67,7 +70,7 @@ def load_dataset(path: Path = DATASET):
 # ── metric helper ─────────────────────────────────────────────────────────────
 
 def score_block(y_true, y_pred, labels) -> dict:
-    """주어진 예측에 대한 표준 metric 묶음."""
+    """Standard bundle of metrics for the given predictions."""
     return {
         "accuracy": float(accuracy_score(y_true, y_pred)),
         "macro_f1": float(f1_score(y_true, y_pred, labels=labels, average="macro", zero_division=0)),
@@ -78,14 +81,14 @@ def score_block(y_true, y_pred, labels) -> dict:
     }
 
 
-# PipelineFactory: 인자 없이 새 (미학습) sklearn-호환 추정기를 반환하는 콜러블.
+# PipelineFactory: a no-arg callable returning a fresh (unfitted) sklearn-compatible estimator.
 PipelineFactory = Callable[[], object]
 
 
-# ── LOSO (주 지표) ────────────────────────────────────────────────────────────
+# ── LOSO (primary metric) ───────────────────────────────────────────────────
 
 def loso(make_pipe: PipelineFactory, X, y, subjects, labels) -> dict:
-    """Leave-One-Subject-Out. 모든 샘플에 대해 out-of-fold 예측을 모아 평가."""
+    """Leave-One-Subject-Out. Collect out-of-fold predictions over all samples and evaluate."""
     subs = sorted(set(subjects.tolist()))
     preds = np.empty(len(y), dtype=object)
     per_subject = {}
@@ -106,10 +109,10 @@ def loso(make_pipe: PipelineFactory, X, y, subjects, labels) -> dict:
     return overall
 
 
-# ── file-grouped 5-fold (보조) ────────────────────────────────────────────────
+# ── file-grouped 5-fold (auxiliary) ───────────────────────────────────────────
 
 def file_grouped_cv(make_pipe: PipelineFactory, X, y, files, labels, k=5, seed=7) -> dict:
-    """같은 파일은 한 fold 에만. 라벨별로 파일을 분배해 라벨 균형 유지."""
+    """A file stays in one fold only. Distribute files per label to keep label balance."""
     rng = np.random.RandomState(seed)
     file_to_idx = defaultdict(list)
     for i, f in enumerate(files):
@@ -136,17 +139,17 @@ def file_grouped_cv(make_pipe: PipelineFactory, X, y, files, labels, k=5, seed=7
     return out
 
 
-# ── Nested LOSO (모델 선택 편향 제거) ─────────────────────────────────────────
+# ── Nested LOSO (removes model-selection bias) ─────────────────────────────────
 
 def nested_loso(
     candidates: dict[str, PipelineFactory],
     X, y, subjects, labels,
 ) -> dict:
-    """Outer=LOSO. 각 outer fold 에서, 남은 피험자들로 inner LOSO 를 돌려
-    후보 중 best(inner macro-F1)를 고른 뒤 그 모델을 outer 테스트 피험자에 적용.
-    ⭐ A2: inner 분할도 피험자 단위(LOSO) → 반복/피험자 누설 없음.
+    """Outer=LOSO. In each outer fold, run an inner LOSO over the remaining subjects,
+    pick the best candidate (inner macro-F1), then apply that model to the outer test subject.
+    A2: the inner split is also per-subject (LOSO) -> no repetition/subject leakage.
 
-    candidates: {이름: 팩토리}. 반환에 outer fold 별 선택된 모델도 기록.
+    candidates: {name: factory}. The return also records the model selected per outer fold.
     """
     subs = sorted(set(subjects.tolist()))
     preds = np.empty(len(y), dtype=object)
@@ -158,7 +161,7 @@ def nested_loso(
         dev_mask = ~te
         dev_subs = [s for s in subs if s != test_s]
 
-        # inner LOSO: dev_subs 안에서 한 명씩 빼며 각 후보 평가
+        # inner LOSO: evaluate each candidate, leaving out one dev subject at a time
         best_name, best_score = None, -1.0
         inner_scores = {}
         for name, make in candidates.items():
@@ -177,7 +180,7 @@ def nested_loso(
             if sc > best_score:
                 best_score, best_name = sc, name
 
-        # 선택된 모델을 dev 전체로 재학습 → outer 테스트
+        # refit the selected model on all dev subjects -> outer test
         pipe = candidates[best_name]()
         pipe.fit(X[dev_mask], y[dev_mask])
         preds[te] = pipe.predict(X[te])
@@ -195,10 +198,10 @@ def nested_loso(
     return out
 
 
-# ── baseline 검증 (직접 실행 시) ──────────────────────────────────────────────
+# ── baseline verification (when run directly) ──────────────────────────────────
 
 def _baseline_pipe():
-    """기존 모델: SimpleImputer→VarianceThreshold→RobustScaler→Normalizer→KNN(1)."""
+    """Existing model: SimpleImputer -> VarianceThreshold -> RobustScaler -> Normalizer -> KNN(1)."""
     from sklearn.pipeline import Pipeline
     from sklearn.impute import SimpleImputer
     from sklearn.feature_selection import VarianceThreshold
@@ -217,43 +220,44 @@ def main() -> None:
     Xa, ya, subja, filesa, feats, labels = load_dataset()
     (X, y, subjects, files), (Xe, ye, sube, _) = split_cohort(Xa, ya, subja, filesa)
 
-    print(f"# Phase 2 — 평가 프로토콜 검증 (baseline KNN n=1)")
-    print(f"  전체 샘플 {len(ya)} / feature {len(feats)} / {len(labels)}클래스")
-    print(f"  학습·평가 코호트(신발 4명 {sorted(set(subjects))}): {len(y)} 샘플")
-    print(f"  환경 holdout(JEONG 맨발): {len(ye)} 샘플 — 학습 제외, robustness 전용\n")
+    print(f"# Phase 2 — evaluation protocol verification (baseline KNN n=1)")
+    print(f"  total samples {len(ya)} / features {len(feats)} / {len(labels)} classes")
+    print(f"  train/eval cohort (4 shoe subjects {sorted(set(subjects))}): {len(y)} samples")
+    print(f"  environment holdout (JEONG barefoot): {len(ye)} samples — excluded from training, robustness only\n")
 
-    print("## file-grouped 5-fold (보조, within-cohort 상한)")
+    print("## file-grouped 5-fold (auxiliary, within-cohort upper bound)")
     fg = file_grouped_cv(_baseline_pipe, X, y, files, labels)
     print(f"  acc={fg['accuracy']:.4f}  macro-F1={fg['macro_f1']:.4f}")
 
-    print("\n## LOSO — 신발 4명 (★ 정직한 주 지표)")
+    print("\n## LOSO — 4 shoe subjects (* honest primary metric)")
     lo = loso(_baseline_pipe, X, y, subjects, labels)
-    print(f"  샘플평균 acc={lo['accuracy']:.4f}  macro-F1={lo['macro_f1']:.4f}")
-    print(f"  ★ 그룹평균 acc(사람당 1표)={lo['per_subject_mean']:.4f}  "
+    print(f"  sample-mean acc={lo['accuracy']:.4f}  macro-F1={lo['macro_f1']:.4f}")
+    print(f"  * group-mean acc (one vote per person)={lo['per_subject_mean']:.4f}  "
           f"min={lo['per_subject_min']:.4f} max={lo['per_subject_max']:.4f}")
     print(f"    per-subject: { {s: round(a,3) for s,a in lo['per_subject_acc'].items()} }")
 
-    print("\n## Nested LOSO — 신발 4명 (단일 후보 → 엔진 동작 확인)")
+    print("\n## Nested LOSO — 4 shoe subjects (single candidate -> sanity check the engine)")
     nl = nested_loso({"knn1": _baseline_pipe}, X, y, subjects, labels)
-    print(f"  그룹평균 acc={nl['per_subject_mean']:.4f}  macro-F1={nl['macro_f1']:.4f}")
+    print(f"  group-mean acc={nl['per_subject_mean']:.4f}  macro-F1={nl['macro_f1']:.4f}")
 
-    # 환경 robustness: JEONG(맨발) 테스트. 단 SEUNG(=JEONG과 동일인)을 학습에서 빼야
-    # '처음 보는 사람 + 맨발'의 순수 환경차가 측정된다. SEUNG을 두면 동일인 누설(0.99).
-    print("\n## 환경 robustness 테스트 (SEUNG=동일인 학습 제외)")
+    # Environment robustness: test on JEONG (barefoot). SEUNG (=same person as JEONG) must be
+    # left out of training so we measure the pure environment gap of 'unseen person + barefoot'.
+    # Keeping SEUNG would leak the same person (0.99).
+    print("\n## Environment robustness test (SEUNG = same person, excluded from training)")
     no_seung = subjects != "SEUNG"
-    pipe = _baseline_pipe(); pipe.fit(X[no_seung], y[no_seung])   # JIHO+JUHO+SHIM 만
+    pipe = _baseline_pipe(); pipe.fit(X[no_seung], y[no_seung])   # JIHO+JUHO+SHIM only
     env_acc = float(accuracy_score(ye, pipe.predict(Xe)))
-    print(f"  학습=JIHO+JUHO+SHIM(신발) → JEONG(맨발) acc={env_acc:.4f}")
-    # 대조군: 같은 3명 → SEUNG(신발, 동일인의 신발버전) — 환경만 다른 비교
+    print(f"  train=JIHO+JUHO+SHIM(shoes) -> JEONG(barefoot) acc={env_acc:.4f}")
+    # Control: same 3 -> SEUNG (shoes, same person's shoe version) — only environment differs
     seung_mask = subja == "SEUNG"
     seung_acc = float(accuracy_score(ya[seung_mask], pipe.predict(Xa[seung_mask])))
-    print(f"  대조) 같은 학습 → SEUNG(신발, 동일인) acc={seung_acc:.4f}")
-    print(f"  → 맨발({env_acc:.2f}) vs 신발({seung_acc:.2f}) 차이 = 같은 사람에서 환경차 영향")
+    print(f"  control) same train -> SEUNG(shoes, same person) acc={seung_acc:.4f}")
+    print(f"  -> barefoot({env_acc:.2f}) vs shoes({seung_acc:.2f}) gap = environment effect for the same person")
 
-    print("\n## 최저 per-class F1 5개 (신발4 LOSO 기준 — 혼동 큰 클래스)")
+    print("\n## Lowest 5 per-class F1 (shoe-4 LOSO — most-confused classes)")
     for lab, f in sorted(lo["per_class_f1"].items(), key=lambda x: x[1])[:5]:
         print(f"    {lab:16s} F1={f:.3f}")
-    print("\n# 엔진 검증 끝. (Phase 3 에서 후보 여러 개를 nested_loso 에 투입)")
+    print("\n# Engine verification done. (Phase 3 feeds multiple candidates into nested_loso.)")
 
 
 if __name__ == "__main__":

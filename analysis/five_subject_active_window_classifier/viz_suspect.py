@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
-"""의심 피크 파일 확대 시각화 (read-only).
+"""Zoomed visualization of suspect peak files (read-only).
 
-phase 진단에서 'weakest<0.30(가짜 피크 의심)' 또는 'gapCV>0.5(불규칙)' 로
-걸린 파일들을 크게 그려, 정말 가짜 피크인지 vs 진짜 약한/불규칙 동작인지 눈으로 확인.
+Files flagged by phase diagnostics as 'weakest<0.30 (possible fake peak)' or
+'gapCV>0.5 (irregular)' are drawn large, to eyeball whether they are truly fake
+peaks vs genuinely weak/irregular motions.
 
-각 subplot = 융합 envelope + 5피크(빨간선) + 크롭 밴드. 약한 피크엔 화살표 표시.
-출력: reports/suspect_peaks.png
+Each subplot = fused envelope + 5 peaks (red lines) + crop bands. Weak peaks get
+an arrow marker.
+Output: reports/suspect_peaks.png
 """
 from __future__ import annotations
 import sys, types
@@ -27,11 +29,11 @@ import build_single_repetition_dataset as bsr
 sys.modules["analysis.active_window_classifier_minimal.build_single_repetition_dataset"]=bsr
 import build_peak_repetition_dataset as bp
 sys.path.insert(0, str(THIS.parent))
-import phase1_segment as p1     # 개선된 choose_real_peaks 사용
+import phase1_segment as p1     # use the improved choose_real_peaks
 
 WIN=["#7fb3ff","#84d68a","#ffd166","#c792ea","#ff8fa3"]
 
-# 진단에서 나온 의심 파일들 (파일명으로 지정)
+# Suspect files flagged by diagnostics (specified by filename)
 SUSPECTS=[
     "JUHO/JUHO_Lead Uppercut_20260517_183223.csv",
     "JUHO/JUHO_Rear Uppercut_20260517_183714.csv",
@@ -61,16 +63,16 @@ def main():
         data=rbc.read_csv_sources(path); _,meta=rbc.extract_features(path)
         jump=float(meta.get("jump_cut_s",0))
         times,env,dur,_=bp.motion_envelope(data,jump)
-        peaks,pm=p1.choose_real_peaks(times,env,dur)     # 개선된 선택
+        peaks,pm=p1.choose_real_peaks(times,env,dur)     # improved selection
         windows=bp.windows_from_peaks(times,env,peaks,dur) if len(peaks)>=p1.MIN_REPS else []
-        windows=p1.uniform_windows(windows,dur)          # 개선5: 길이 균일(넉넉)
+        windows=p1.uniform_windows(windows,dur)          # improvement 5: uniform width (generous)
         ax.plot(times,env,color="#1f4e79",lw=1.3); ymax=max(env.max(),1e-6)
         for i,w in enumerate(windows):
             ax.add_patch(Rectangle((w["start_s"],0),w["end_s"]-w["start_s"],ymax,
                                    color=WIN[i%5],alpha=0.4,zorder=0))
             pt=w["peak_time_s"]; pv=w["peak_score"]
             ax.axvline(pt,color="#d72638",lw=1.0)
-            if pv < 0.30*ymax:                      # 약한 피크 강조
+            if pv < 0.30*ymax:                      # highlight weak peak
                 ax.annotate("weak?",(pt,pv),fontsize=8,color="red",weight="bold")
         ax.set_yticks([])
         lab=path.name.split('_',1)[1].rsplit('_',2)[0]
@@ -84,6 +86,6 @@ def main():
     fig.suptitle("Suspect peak files (fused envelope + 5 peaks + crop bands; 'weak?'=peak<30% of max)",fontsize=12,y=0.997)
     fig.tight_layout(rect=[0,0,1,0.98])
     out=OUT/"suspect_peaks.png"; fig.savefig(out,dpi=120)
-    print(f"저장 → {out}  ({n}개 의심 파일)")
+    print(f"saved -> {out}  ({n} suspect files)")
 
 if __name__=="__main__": main()

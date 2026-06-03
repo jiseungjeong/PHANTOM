@@ -1,16 +1,18 @@
 #!/usr/bin/env python3
-"""피크 기반 크롭 시각화 — 세그멘테이션 품질 점검 (read-only).
+"""Peak-based crop visualization — segmentation quality check (read-only).
 
-각 subplot = 한 (피험자, 동작) 파일의:
-  - envelope (모션 세기 곡선, 파랑)
-  - 검출된 피크 (빨간 세로선)
-  - 5개 active window 크롭 구간 (색칠 밴드 rep1~5)
-이를 통해 "5반복을 동작 위치에서 제대로 5조각 잘랐나"를 눈으로 확인.
+Each subplot = one (subject, action) file showing:
+  - envelope (motion-intensity curve, blue)
+  - detected peaks (red vertical lines)
+  - the 5 active-window crop spans (colored bands rep1~5)
+This lets you eyeball whether "the 5 repetitions were cut into 5 pieces at the
+right action positions".
 
-대표 샘플 그리드: 10동작(행) × 선택 피험자(열). 첫 번째 측정 파일 사용.
-출력: reports/segmentation_grid.png  (.gitignore로 추적 제외)
+Representative-sample grid: 10 actions (rows) x selected subjects (cols).
+Uses the first measurement file.
+Output: reports/segmentation_grid.png  (excluded from tracking by .gitignore)
 
-실행: python3 analysis/five_subject_active_window_classifier/viz_segmentation.py
+Run: python3 analysis/five_subject_active_window_classifier/viz_segmentation.py
 """
 
 from __future__ import annotations
@@ -41,18 +43,18 @@ import build_single_repetition_dataset as bsr
 sys.modules["analysis.active_window_classifier_minimal.build_single_repetition_dataset"] = bsr
 import build_peak_repetition_dataset as bp
 sys.path.insert(0, str(THIS.parent))
-import phase1_segment as p1      # 최신 choose_real_peaks (floor+gapCV+heightCV+유연반복)
+import phase1_segment as p1      # latest choose_real_peaks (floor+gapCV+heightCV+flexible reps)
 
 SINGLE_LABELS = ["Lead Jab", "Lead Hook", "Lead Uppercut",
                  "Rear Jab", "Rear Hook", "Rear Uppercut",
                  "Left Slip", "Right Slip", "Left Roll", "Right Roll"]
-# 신발 코호트 중심으로 보되, 환경 비교 위해 JEONG(맨발)도 포함
+# Focus on the shoe cohort, but include JEONG (barefoot) for environment comparison
 COLS = ["SEUNG", "JIHO", "JUHO", "SHIM"]
 WIN_COLORS = ["#7fb3ff", "#84d68a", "#ffd166", "#c792ea", "#ff8fa3"]
 
 
 def find_file(subject: str, label: str, take: int = 0) -> Path | None:
-    """그 라벨(콤보 아님)의 take 번째 측정 파일 (0,1,2 = 3회 측정 중)."""
+    """The take-th measurement file (0,1,2 of 3 takes) for this (non-combo) label."""
     folder = DATA_DIR / f"{subject.lower()}_data"
     cands = sorted(p for p in folder.glob(f"{subject}_{label}_*.csv") if "_Watch_" not in p.name)
     return cands[take] if take < len(cands) else None
@@ -67,14 +69,14 @@ def segment(path: Path):
     times, env, dur, _ = bp.motion_envelope(data, jump)
     if len(env) == 0:
         return None
-    peaks, pmeta = p1.choose_real_peaks(times, env, dur)   # 최신 알고리즘
+    peaks, pmeta = p1.choose_real_peaks(times, env, dur)   # latest algorithm
     windows = bp.windows_from_peaks(times, env, peaks, dur) if len(peaks) >= p1.MIN_REPS else []
-    windows = p1.uniform_windows(windows, dur)            # 개선5: 길이 균일(넉넉)
+    windows = p1.uniform_windows(windows, dur)            # improvement 5: uniform width (generous)
     return times, env, windows, pmeta
 
 
 def draw_grid(take: int) -> None:
-    """take 번째 측정 파일로 그리드 1장 생성."""
+    """Generate one grid using the take-th measurement file."""
     nrows, ncols = len(SINGLE_LABELS), len(COLS)
     fig, axes = plt.subplots(nrows, ncols, figsize=(4.2 * ncols, 1.7 * nrows), squeeze=False)
     drawn = 0
@@ -111,11 +113,11 @@ def draw_grid(take: int) -> None:
     fig.tight_layout(rect=[0, 0, 1, 0.98])
     out = OUT_DIR / f"segmentation_grid_{take + 1}.png"
     fig.savefig(out, dpi=110); plt.close(fig)
-    print(f"  측정#{take + 1}: subplot {drawn}/{nrows * ncols} → {out.name}")
+    print(f"  measurement #{take + 1}: subplot {drawn}/{nrows * ncols} -> {out.name}")
 
 
 def main() -> None:
-    print("# 피크 크롭 시각화 (3회 측정 각각)")
+    print("# Peak crop visualization (for each of the 3 measurements)")
     for take in (0, 1, 2):
         draw_grid(take)
 
