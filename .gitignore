@@ -67,6 +67,11 @@ analysis/**/*.png
 analysis/**/reports/
 analysis/**/_*_tmp/
 analysis/**/__pycache__/
+
+# Exception: curated presentation figures (small, the actual deliverable).
+# Verification grids and other regenerable PNGs stay ignored under reports/.
+!analysis/**/figures/
+!analysis/**/figures/*.png
 # but DO track the small model_metadata.json (config + validation metrics record;
 # tiny, useful for reproducing/comparing model runs)
 !analysis/**/model_metadata.json
