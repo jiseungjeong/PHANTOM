@@ -274,7 +274,11 @@ struct MotionRuleClassifier {
     // MARK: - Numeric Helpers
 
     private func magnitude(_ x: [Double], _ y: [Double], _ z: [Double]) -> [Double] {
-        (0..<x.count).map { i in (x[i]*x[i] + y[i]*y[i] + z[i]*z[i]).squareRoot() }
+        (0..<x.count).map { i -> Double in
+            let xi = x[i], yi = y[i], zi = z[i]
+            let sumSq = xi * xi + yi * yi + zi * zi
+            return sumSq.squareRoot()
+        }
     }
 
     private func mean(_ x: [Double]) -> Double {

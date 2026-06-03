@@ -123,8 +123,29 @@ struct PHANTOMSessionStats {
         return d
     }
 
+    // Fatigue: late-session TT minus early-session TT (positive = guard returning slower)
+    var fatigueDriftMs: Double? {
+        let tts = transitionTimes
+        guard tts.count >= 4 else { return nil }
+        let mid   = tts.count / 2
+        let early = tts.prefix(mid)
+        let late  = tts.suffix(tts.count - mid)
+        let earlyAvg = early.reduce(0, +) / Double(early.count)
+        let lateAvg  = late.reduce(0, +)  / Double(late.count)
+        return lateAvg - earlyAvg
+    }
+}
+
+#if os(iOS)
+extension PHANTOMSessionStats {
     /// Build stats from a post-session DetectedMotionSequence.
     /// Maps KNN string labels back to PunchLabel / DefenseLabel enums.
+    ///
+    /// iOS-only: `DetectedMotionSequence` is iOS-side current-session state and
+    /// is not part of the Watch target, which only emits raw spikes.
+    ///
+    /// Declared in an extension so the compiler still synthesizes the memberwise
+    /// `init(events:startTime:endTime:)` used elsewhere (e.g. startSession).
     init(from sequence: DetectedMotionSequence, startTime: Date, endTime: Date) {
         self.startTime = startTime
         self.endTime   = endTime
@@ -138,16 +159,5 @@ struct PHANTOMSessionStats {
             return nil
         }
     }
-
-    // Fatigue: late-session TT minus early-session TT (positive = guard returning slower)
-    var fatigueDriftMs: Double? {
-        let tts = transitionTimes
-        guard tts.count >= 4 else { return nil }
-        let mid   = tts.count / 2
-        let early = tts.prefix(mid)
-        let late  = tts.suffix(tts.count - mid)
-        let earlyAvg = early.reduce(0, +) / Double(early.count)
-        let lateAvg  = late.reduce(0, +)  / Double(late.count)
-        return lateAvg - earlyAvg
-    }
 }
+#endif
