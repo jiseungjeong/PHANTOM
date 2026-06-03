@@ -11,16 +11,17 @@ struct StatsView: View {
     var body: some View {
         List {
 
-            // MARK: - Current Session Overview
+            // MARK: - Session Overview  (derived from classified motionSequence)
             Section("Session Overview") {
+                let seq = session.motionSequence
                 LabeledContent("Total Punches") {
-                    Text("\(stats.totalPunches)").fontWeight(.semibold)
+                    Text("\(seq?.punchCount ?? stats.totalPunches)").fontWeight(.semibold)
                 }
                 LabeledContent("Lead Punches") {
-                    Text("\(stats.leadPunches.count)").fontWeight(.semibold)
+                    Text("\(seq?.leadPunchCount ?? stats.leadPunches.count)").fontWeight(.semibold)
                 }
                 LabeledContent("Rear Punches") {
-                    Text("\(stats.rearPunches.count)").fontWeight(.semibold)
+                    Text("\(seq?.rearPunchCount ?? stats.rearPunches.count)").fontWeight(.semibold)
                 }
                 LabeledContent("Total Defense") {
                     Text(defenseOverviewValue).fontWeight(.semibold)
@@ -32,7 +33,7 @@ struct StatsView: View {
                 }
             }
 
-            // MARK: - Defense Breakdown  (from segmented single motions, Feature E)
+            // MARK: - Defense Breakdown
             Section("Defense Breakdown") {
                 let bd = session.motionSequence?.defenseBreakdown ?? [:]
                 if session.isSegmenting {
@@ -42,8 +43,7 @@ struct StatsView: View {
                     }
                 } else if bd.isEmpty {
                     Text("No defense motions detected this session.")
-                        .foregroundStyle(.secondary)
-                        .font(.caption)
+                        .foregroundStyle(.secondary).font(.caption)
                 } else {
                     ForEach(DetectedMotionSequence.defenseLabelOrder, id: \.self) { label in
                         let count = bd[label] ?? 0
@@ -56,40 +56,34 @@ struct StatsView: View {
                 }
             }
 
-            // MARK: - Recent Events (current session only, not persisted)
-            if !stats.events.isEmpty {
-                Section("Recent Events") {
-                    ForEach(stats.events.suffix(20).reversed()) { event in
-                        HStack {
-                            Image(systemName: event.isPunch ? "bolt.fill" : "shield.fill")
-                                .foregroundStyle(event.isPunch ? .blue : .purple)
-                                .frame(width: 20)
-                            Text(event.displayLabel).fontWeight(.medium)
-                            Spacer()
-                            if let tt = event.transitionTimeMs {
-                                Text("TT \(Int(tt)) ms")
-                                    .font(.caption)
-                                    .foregroundStyle(.cyan)
+            // MARK: - Punch Breakdown
+            if let bd = session.motionSequence?.punchBreakdown, !bd.isEmpty {
+                Section("Punch Breakdown") {
+                    let punchOrder = ["Lead Jab","Lead Hook","Lead Uppercut",
+                                      "Rear Jab","Rear Hook","Rear Uppercut"]
+                    ForEach(punchOrder, id: \.self) { label in
+                        let count = bd[label] ?? 0
+                        if count > 0 {
+                            LabeledContent(label) {
+                                Text("\(count)").fontWeight(.semibold)
                             }
                         }
                     }
                 }
             }
 
-            // MARK: - Detected Single Motions (this session, Feature D)
+            // MARK: - Detected Motions (full sequence)
             if let seq = session.motionSequence {
                 Section {
                     if session.isSegmenting {
                         HStack {
                             ProgressView()
                             Text("Analyzing session…")
-                                .foregroundStyle(.secondary)
-                                .font(.caption)
+                                .foregroundStyle(.secondary).font(.caption)
                         }
                     } else if seq.isEmpty {
                         Text("No motions detected.")
-                            .foregroundStyle(.secondary)
-                            .font(.caption)
+                            .foregroundStyle(.secondary).font(.caption)
                     } else {
                         ForEach(Array(seq.items.enumerated()), id: \.element.id) { idx, item in
                             HStack {
@@ -97,14 +91,15 @@ struct StatsView: View {
                                     .font(.caption.monospacedDigit())
                                     .foregroundStyle(.secondary)
                                     .frame(width: 24, alignment: .trailing)
-                                Image(systemName: "figure.boxing")
-                                    .foregroundStyle(.green)
+                                Image(systemName: DetectedMotionSequence.punchLabels.contains(item.label)
+                                      ? "bolt.fill" : "shield.fill")
+                                    .foregroundStyle(DetectedMotionSequence.punchLabels.contains(item.label)
+                                                     ? .blue : .purple)
                                     .frame(width: 20)
                                 Text(item.label).fontWeight(.medium)
                                 Spacer()
                                 Text("\(Int((item.confidence * 100).rounded()))%")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
+                                    .font(.caption).foregroundStyle(.secondary)
                             }
                         }
                     }
@@ -113,15 +108,12 @@ struct StatsView: View {
                         Text("Detected Motions (this session)")
                         Spacer()
                         if !seq.isEmpty {
-                            Button("Clear") {
-                                session.resetMotionSequence()
-                            }
-                            .font(.caption)
-                            .textCase(nil)
+                            Button("Clear") { session.resetMotionSequence() }
+                                .font(.caption).textCase(nil)
                         }
                     }
                 } footer: {
-                    Text("Single motions inferred from the live session, in order. Cleared independently of cumulative records.")
+                    Text("Actions identified by KNN classifier from the full session buffer, in order.")
                         .font(.caption2)
                 }
             }
@@ -149,21 +141,17 @@ struct StatsView: View {
                             Text(formatted(today.totalDurationSeconds)).fontWeight(.semibold)
                         }
                     }
-
-                    // Per-session breakdown
                     if today.sessionCount > 1 {
                         ForEach(Array(today.sessions.enumerated()), id: \.element.id) { idx, s in
                             LabeledContent("Session \(idx + 1)") {
                                 Text("\(s.totalPunches) punches · \(s.totalDefenses) def")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
+                                    .font(.caption).foregroundStyle(.secondary)
                             }
                         }
                     }
                 } else {
                     Text("No sessions recorded today.")
-                        .foregroundStyle(.secondary)
-                        .font(.caption)
+                        .foregroundStyle(.secondary).font(.caption)
                 }
             } header: {
                 Text("Today's Cumulative Records")
@@ -190,25 +178,20 @@ struct StatsView: View {
             isPresented: $showResetConfirm,
             titleVisibility: .visible
         ) {
-            Button("Reset Today", role: .destructive) {
-                history.resetToday()
-            }
+            Button("Reset Today", role: .destructive) { history.resetToday() }
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("This will delete all session records for today. This cannot be undone.")
         }
     }
 
-    /// Current-session Total Defense, counted from the segmented single-motion
-    /// sequence (Feature E). "—" until the session stops and segmentation runs.
     private var defenseOverviewValue: String {
-        guard let count = session.detectedDefenseCount else { return "—" }
+        guard let count = session.motionSequence?.defenseCount else { return "—" }
         return "\(count)"
     }
 
     private func formatted(_ seconds: TimeInterval) -> String {
-        let m = Int(seconds) / 60
-        let s = Int(seconds) % 60
+        let m = Int(seconds) / 60; let s = Int(seconds) % 60
         return String(format: "%d:%02d", m, s)
     }
 }

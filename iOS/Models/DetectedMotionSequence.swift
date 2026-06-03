@@ -29,6 +29,13 @@ struct DetectedMotionSequence {
     /// Single-motion labels that count as defense. The current model emits 10
     /// single actions; the defensive ones are slips and rolls (Step/Guard are
     /// not in the model's label set). Punches (jab/hook/uppercut) are excluded.
+    static let punchLabels: Set<String> = [
+        "Lead Jab", "Lead Hook", "Lead Uppercut",
+        "Rear Jab", "Rear Hook", "Rear Uppercut",
+    ]
+    static let leadLabels: Set<String> = ["Lead Jab", "Lead Hook", "Lead Uppercut"]
+    static let rearLabels: Set<String> = ["Rear Jab", "Rear Hook", "Rear Uppercut"]
+
     static let defenseLabels: Set<String> = [
         "Left Slip", "Right Slip", "Left Roll", "Right Roll",
     ]
@@ -39,11 +46,22 @@ struct DetectedMotionSequence {
     ]
 
     /// Number of detected motions that are defensive.
+    var punchCount: Int   { items.filter { Self.punchLabels.contains($0.label) }.count }
+    var leadPunchCount: Int  { items.filter { Self.leadLabels.contains($0.label) }.count }
+    var rearPunchCount: Int  { items.filter { Self.rearLabels.contains($0.label) }.count }
     var defenseCount: Int {
         items.filter { Self.defenseLabels.contains($0.label) }.count
     }
 
     /// Per-label counts of defensive motions in this sequence.
+    var punchBreakdown: [String: Int] {
+        var d: [String: Int] = [:]
+        for item in items where Self.punchLabels.contains(item.label) {
+            d[item.label, default: 0] += 1
+        }
+        return d
+    }
+
     var defenseBreakdown: [String: Int] {
         var d: [String: Int] = [:]
         for item in items where Self.defenseLabels.contains(item.label) {

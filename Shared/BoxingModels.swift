@@ -123,6 +123,22 @@ struct PHANTOMSessionStats {
         return d
     }
 
+    /// Build stats from a post-session DetectedMotionSequence.
+    /// Maps KNN string labels back to PunchLabel / DefenseLabel enums.
+    init(from sequence: DetectedMotionSequence, startTime: Date, endTime: Date) {
+        self.startTime = startTime
+        self.endTime   = endTime
+        self.events    = sequence.items.compactMap { item in
+            if let punch = PunchLabel(rawValue: item.label) {
+                return BoxingEvent(tsMs: item.tsMs, kind: .punch(punch))
+            }
+            if let defense = DefenseLabel(rawValue: item.label) {
+                return BoxingEvent(tsMs: item.tsMs, kind: .defense(defense))
+            }
+            return nil
+        }
+    }
+
     // Fatigue: late-session TT minus early-session TT (positive = guard returning slower)
     var fatigueDriftMs: Double? {
         let tts = transitionTimes
