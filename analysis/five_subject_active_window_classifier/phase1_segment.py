@@ -43,6 +43,116 @@ import build_peak_repetition_dataset as bp
 
 SINGLE_REPETITIONS = bsr.SINGLE_REPETITIONS          # 5
 FULL_SENSOR = bp.FULL_SENSOR_SIGNATURE               # "AirPods+Watch+iPhone"
+BIN_S = bp.BIN_S
+
+
+def _gap_cv(idxs, times):
+    """선택된 피크들의 간격 변동계수(작을수록 등간격)."""
+    ts = sorted(float(times[i]) for i in idxs)
+    gaps = np.diff(ts)
+    m = float(np.mean(gaps))
+    return float(np.std(gaps) / m) if m > 0 else 9.99
+
+
+def _height_cv(idxs, envelope):
+    """선택된 피크들의 높이 변동계수(작을수록 높이 균일).
+    진짜 5반복은 세기가 고르고, 가짜(점프잔재=너무 큼, 잡음=너무 작음)는 높이가 튄다."""
+    hs = np.array([float(envelope[i]) for i in idxs])
+    m = float(hs.mean())
+    return float(hs.std() / m) if m > 0 else 9.99
+
+
+def uniform_windows(windows, duration):
+    """개선5: 크롭 길이 균일화. 파일 내 윈도우 폭의 대표값을 구해 모든 윈도우를
+    각자의 peak_time_s 중심으로 같은 폭으로 재설정.
+
+    폭은 '넉넉하게': 적게 vs 많이 중 많이가 나음(동작 잘림이 더 해로움) → 중앙값이
+    아니라 **75퍼센타일 폭**을 대표값으로 써 약간 길게 자른다. 단 이웃 피크 중간점·
+    파일 범위로 clamp 해 겹침/이탈은 막는다."""
+    if not windows:
+        return windows
+    widths = [w["end_s"] - w["start_s"] for w in windows]
+    half = float(np.percentile(widths, 75)) / 2.0     # 중앙값보다 넉넉 (많이 잡기)
+    ws = sorted(windows, key=lambda w: w["peak_time_s"])
+    out = []
+    for idx, w in enumerate(ws):
+        pt = w["peak_time_s"]
+        lo = pt - half
+        hi = pt + half
+        # 이웃 피크와 겹침 방지: 중간점으로 제한
+        if idx > 0:
+            lo = max(lo, (ws[idx - 1]["peak_time_s"] + pt) / 2.0)
+        if idx < len(ws) - 1:
+            hi = min(hi, (pt + ws[idx + 1]["peak_time_s"]) / 2.0)
+        lo = max(0.0, lo)
+        hi = min(duration, hi)
+        nw = dict(w)
+        nw["start_s"], nw["end_s"] = lo, hi
+        out.append(nw)
+    return out
+
+
+MAX_REPS = SINGLE_REPETITIONS      # 5 (정상 반복 수)
+MIN_REPS = 4                        # 진짜 봉우리가 4개면 4샘플로 살림. 3개 이하 invalid.
+
+
+def choose_real_peaks(times, envelope, duration, max_reps=MAX_REPS):
+    """floor 강화(개선1) + 간격 규칙성(개선3) + 유연 반복수.
+
+    개선1: floor 미만 봉우리(점프 잔재·잡음)는 끝까지 제외.
+    개선3: 6개+ 후보면 '높이 우선'이 아니라 **간격이 가장 일정한 조합**을 골라
+           점프 잔재·리듬 깨는 가짜 피크를 배제.
+    유연 반복수: 진짜 문제는 '가짜 피크가 끼는 6개+'이지 '진짜 4번 한 것'이 아니다.
+           → floor 통과 봉우리(real)가 6개+면 규칙성으로 5개 선택, 정확히 5면 그대로,
+             4개면 4샘플로 살림, **3개 이하만 invalid**.
+    """
+    peaks = bp.local_peak_indices(envelope)
+    if not peaks:
+        return [], {"status": "no_peaks", "real_peaks": 0}
+    median = float(np.median(envelope))
+    mad = float(np.median(np.abs(envelope - median))) or 1e-6
+    floor = max(float(np.percentile(envelope, 62)), median + 0.45 * mad)
+    real = sorted(i for i in peaks if envelope[i] >= floor)
+    n = len(real)
+    if n < MIN_REPS:
+        return [], {"status": "too_few_real_peaks", "real_peaks": n, "floor": floor}
+
+    # 목표 개수: 4~5 사이에서 real 수에 맞춤 (6개+ 면 5로 줄임)
+    target = min(max_reps, n) if n <= max_reps else max_reps
+    # 최소간격은 '잡음 쌍둥이 피크' 제거 수준(0.30s)으로만 둔다. 진짜 동작 간격이
+    # 0.6s 수준으로 빠를 수 있어 큰 min_sep 은 정상 파일을 떨군다(no_valid_combo).
+    # 촘촘한 가짜는 간격 규칙성(gapCV) 점수가 알아서 배제하므로 여기선 느슨하게.
+    min_sep = max(1, int(round(0.30 / BIN_S)))
+
+    if n == target:
+        sel, gcv = real, _gap_cv(real, times)
+    else:
+        # n > target (6개+ → target개로): best 조합 선택. key = 작을수록 좋음.
+        #   gapCV(주)         : 간격 등간격
+        #   0.3*heightCV(보조): 높이 균일 (점프잔재 큼·잡음 작음 배제)
+        #   0.1*edge(약보조)  : 가장자리 피크 회피(개선6) — 점프잔재(맨앞)·꼬리흔들림(맨뒤)
+        #                       을 살짝 불리하게. 진짜 앞쪽 반복은 안 밀어내도록 약하게.
+        from itertools import combinations
+        n_bins = len(envelope)
+        best, best_key, gcv_sel = None, None, 9.99
+        for combo in combinations(real, target):
+            if any(combo[k + 1] - combo[k] < min_sep for k in range(target - 1)):
+                continue
+            gcv = _gap_cv(combo, times)
+            hcv = _height_cv(combo, envelope)
+            # edge_penalty: 각 피크의 가장자리 근접도 평균 (0=완전중앙, 1=양끝).
+            # |pos-0.5|*2 → 중앙0, 양끝1. 가장자리일수록 페널티 커짐.
+            edge_penalty = float(np.mean([2.0 * abs(i / max(1, n_bins - 1) - 0.5) for i in combo]))
+            key = gcv + 0.3 * hcv + 0.1 * edge_penalty
+            if best_key is None or key < best_key:
+                best_key, best, gcv_sel = key, combo, gcv
+        if best is None:
+            return [], {"status": "no_valid_combo", "real_peaks": n, "floor": floor}
+        sel, gcv = list(best), gcv_sel
+
+    return sorted(sel), {"status": "ok", "real_peaks": n, "n_selected": len(sel),
+                         "floor": floor, "gap_cv": round(gcv, 3),
+                         "height_cv": round(_height_cv(sel, envelope), 3)}
 
 
 def subject_from_path(path: Path) -> str:
@@ -101,17 +211,19 @@ def main() -> None:
             invalid.append({"file": path.name, "label": label, "subject": subject,
                             "reason": env_meta.get("status", "no_envelope")}); continue
 
-        peaks, peak_meta = bp.choose_five_peaks(times, envelope, duration)
-        if len(peaks) != SINGLE_REPETITIONS:
+        peaks, peak_meta = choose_real_peaks(times, envelope, duration)   # 개선1+3+유연반복
+        if len(peaks) < MIN_REPS:                          # 4·5개 허용, 3개 이하만 invalid
             invalid.append({"file": path.name, "label": label, "subject": subject,
-                            "reason": f"peaks={len(peaks)}({peak_meta.get('status')})"}); continue
+                            "reason": f"{peak_meta.get('status')}(real={peak_meta.get('real_peaks')})"}); continue
         windows = bp.windows_from_peaks(times, envelope, peaks, duration)
+        windows = uniform_windows(windows, duration)       # 개선5: 길이 균일(넉넉)
 
         coverage_s = sum(max(0.0, w["end_s"] - w["start_s"]) for w in windows)
         qc_rows.append({
             "file": path.name, "label": label, "subject": subject,
             "duration_s": round(duration, 3), "jump_cut_s": round(jump_cut_s, 3),
             "coverage_pct": round(coverage_s / duration, 3) if duration > 0 else 0.0,
+            "n_peaks": len(windows),
             "peak_times_s": [round(w["peak_time_s"], 3) for w in windows],
         })
 
@@ -122,7 +234,7 @@ def main() -> None:
                 base={
                     "single_repetition_sample": 1.0,
                     "repetition_index": float(rep_idx),
-                    "repetition_count": float(SINGLE_REPETITIONS),
+                    "repetition_count": float(len(windows)),   # 실제 선택 수(4 or 5)
                     "whole_file_duration_s": duration,
                     "active_peak_time_s": win["peak_time_s"],
                     "active_peak_score": win["peak_score"],
@@ -159,7 +271,9 @@ def main() -> None:
     print(f"  피험자별 샘플: {dict(Counter(s['subject'] for s in samples))}")
     print(f"  라벨별 샘플:   {dict(sorted(Counter(s['label'] for s in samples).items()))}")
     files_used = len({s['file'] for s in samples})
-    print(f"  사용 파일 수: {files_used}  (기대 150)")
+    n5 = sum(1 for q in qc_rows if q["n_peaks"] == 5)
+    n4 = sum(1 for q in qc_rows if q["n_peaks"] == 4)
+    print(f"  사용 파일 수: {files_used}  (5피크 {n5} + 4피크 {n4})")
     print(f"  feature 수: 전체 {len(all_names)} / motion_all {len(motion_all)}")
     if invalid:
         print(f"  ⚠️ invalid 사유: {dict(Counter(i['reason'].split('(')[0] for i in invalid))}")
