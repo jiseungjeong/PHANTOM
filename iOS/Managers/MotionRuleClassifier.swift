@@ -7,11 +7,9 @@ import Foundation
 //
 // Pipeline (mirrors Python sklearn pipeline exactly):
 //   1. Group samples by source (Watch / iPhone / AirPods).
-//   2. Detect the sync jump; features are extracted after jump_peak + 0.55 s.
-//      classifySegment(): no jump cut — the caller already cut a tight window.
-//   3. Build the 491-feature vector (same keys as rule_base_classifier.add_source_features).
-//   4. Apply: SimpleImputer(0) → VarianceThreshold → RobustScaler → Normalizer(l2).
-//   5. Compute 1-NN Manhattan distance against 450 stored training vectors; return
+//   2. Build the 491-feature vector (same keys as rule_base_classifier.add_source_features).
+//   3. Apply: SimpleImputer(0) → VarianceThreshold → RobustScaler → Normalizer(l2).
+//   4. Compute 1-NN Manhattan distance against 450 stored training vectors; return
 //      the label of the nearest neighbour and distance-based confidence.
 
 struct MotionRuleClassifier {
@@ -23,7 +21,6 @@ struct MotionRuleClassifier {
         let confidence: Double
         let sourceSignature: String
         let ruleSource: String   // "knn"
-        let jumpCutS: Double
     }
 
     // MARK: - KNN Parameters  (decoded from knn_params.json)
@@ -75,34 +72,30 @@ struct MotionRuleClassifier {
         "Left Slip", "Right Slip", "Left Roll", "Right Roll",
     ]
 
-    /// Classify a full recording: detect the sync jump, compute features from
-    /// the post-jump segment, run KNN. Returns nil when data is too short.
+    /// Classify a recording from the beginning. Returns nil when data is too short.
     func classify(samples: [TimeSeriesRawSample]) -> Result? {
         let bySource = group(samples)
         let totalRows = bySource.values.reduce(0) { $0 + $1.count }
         guard totalRows >= 5 else { return nil }
-        let jumpCutS = detectJumpCut(bySource)
-        return classify(bySource: bySource, jumpCutS: jumpCutS)
+        return classifyBySource(bySource)
     }
 
-    /// Classify a tight per-event window (jumpCut = 0, matching the training
-    /// pipeline for single-repetition active windows).
+    /// Classify a tight per-event window from the beginning.
     func classifySegment(samples: [TimeSeriesRawSample]) -> Result? {
         let bySource = group(samples)
         let totalRows = bySource.values.reduce(0) { $0 + $1.count }
         guard totalRows >= 5 else { return nil }
-        return classify(bySource: bySource, jumpCutS: 0.0)
+        return classifyBySource(bySource)
     }
 
     // MARK: - Shared classification core
 
-    private func classify(bySource: [String: [Row]], jumpCutS: Double) -> Result? {
+    private func classifyBySource(_ bySource: [String: [Row]]) -> Result? {
         var features: [String: Double] = [
-            "jump_cut_s": jumpCutS,
             "total_rows": Double(bySource.values.reduce(0) { $0 + $1.count }),
         ]
         for source in Self.sources {
-            addSourceFeatures(into: &features, source: source, rows: bySource[source] ?? [], jumpCutS: jumpCutS)
+            addSourceFeatures(into: &features, source: source, rows: bySource[source] ?? [])
         }
         let hasSegment = Self.sources.contains { (features["\(prefix($0))_n"] ?? 0) >= 5 }
         guard hasSegment else { return nil }
@@ -110,7 +103,7 @@ struct MotionRuleClassifier {
         let signature = sourceSignature(features)
         let (label, confidence) = predictKNN(features: features)
         return Result(label: label, confidence: confidence, sourceSignature: signature,
-                      ruleSource: "knn", jumpCutS: jumpCutS)
+                      ruleSource: "knn")
     }
 
     // MARK: - KNN Inference
@@ -149,7 +142,6 @@ struct MotionRuleClassifier {
                      gx: Double, gy: Double, gz: Double)
 
     static let sources = ["Watch", "iPhone", "AirPods"]
-    private static let jumpPriority = ["iPhone", "AirPods", "Watch"]
 
     private func prefix(_ source: String) -> String {
         String(source.lowercased().first ?? "?")
@@ -165,61 +157,19 @@ struct MotionRuleClassifier {
         return out
     }
 
-    // MARK: - Jump Detection
-
-    func detectJumpCut(_ data: [String: [Row]]) -> Double {
-        var candidates: [(priority: Int, jumpT: Double)] = []
-
-        for (priority, source) in Self.jumpPriority.enumerated() {
-            guard let rows = data[source], rows.count >= 10 else { continue }
-            let t0 = rows[0].t
-            let duration = rows[rows.count - 1].t - t0
-            if duration <= 0 { continue }
-
-            let earlyLimit = min(5.0, max(1.5, duration * 0.50))
-            var samples: [(tt: Double, acc: Double)] = []
-            for row in rows {
-                let tt = row.t - t0
-                if tt > earlyLimit { break }
-                let accMag = (row.ax*row.ax + row.ay*row.ay + row.az*row.az).squareRoot()
-                samples.append((tt, accMag))
-            }
-            if samples.count < 6 { continue }
-
-            let acc = samples.map(\.acc)
-            let medianAcc = median(acc)
-            let mad = max(0.05, median(acc.map { abs($0 - medianAcc) }))
-            let threshold = max(2.15, medianAcc + 2.5 * mad)
-
-            for i in 1..<(samples.count - 1) {
-                if samples[i].acc >= threshold,
-                   samples[i].acc >= samples[i-1].acc,
-                   samples[i].acc >= samples[i+1].acc {
-                    candidates.append((priority, samples[i].tt))
-                    break
-                }
-            }
-        }
-
-        guard let best = candidates.min(by: { $0.priority != $1.priority
-            ? $0.priority < $1.priority : $0.jumpT < $1.jumpT }) else { return 0.0 }
-        return best.jumpT + 0.55
-    }
-
     // MARK: - Feature Extraction
 
     private func addSourceFeatures(into features: inout [String: Double],
-                                   source: String, rows: [Row], jumpCutS: Double) {
+                                   source: String, rows: [Row]) {
         let p = prefix(source)
         features["\(p)_present"] = rows.isEmpty ? 0.0 : 1.0
         features["\(p)_raw_n"]   = Double(rows.count)
         guard rows.count >= 5 else { return }
 
         let t0 = rows[0].t
-        var segment = rows.filter { $0.t - t0 >= jumpCutS }
-        if segment.count < 5 { segment = Array(rows.suffix(min(20, rows.count))) }
+        let segment = rows
 
-        let t  = segment.map { $0.t - t0 - jumpCutS }
+        let t  = segment.map { $0.t - t0 }
         let ax = segment.map(\.ax), ay = segment.map(\.ay), az = segment.map(\.az)
         let gx = segment.map(\.gx), gy = segment.map(\.gy), gz = segment.map(\.gz)
         let accMag  = magnitude(ax, ay, az)

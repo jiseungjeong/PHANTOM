@@ -6,11 +6,10 @@ import Foundation
 // session and returns a DetectedMotionSequence with every classified action.
 //
 // Steps (mirrors build_peak_repetition_dataset.py):
-//   1. Detect the sync jump cut.
-//   2. Build a motion envelope: bin 40 ms, fuse Watch/iPhone/AirPods signals,
+//   1. Build a motion envelope: bin 40 ms, fuse Watch/iPhone/AirPods signals,
 //      weight 62% gyro + 38% dynamic acceleration, smooth with a 5-bin kernel.
-//   3. Find all peaks in the envelope (min 0.5 s separation).
-//   4. For each peak: cut a ±0.5 s / +0.8 s window, classify with KNN.
+//   2. Find all peaks in the envelope (min 0.5 s separation).
+//   3. For each peak: cut a ±0.5 s / +0.8 s window, classify with KNN.
 
 struct SessionAnalyzer {
 
@@ -29,12 +28,11 @@ struct SessionAnalyzer {
         guard !samples.isEmpty else { return DetectedMotionSequence(items: []) }
 
         let bySource = classifier.group(samples)
-        let jumpCutS = classifier.detectJumpCut(bySource)
 
         // Global t0: earliest timestamp across all sources
         let globalT0 = bySource.values.compactMap { $0.first?.t }.min() ?? 0.0
 
-        let (times, envelope, _) = motionEnvelope(bySource: bySource, jumpCutS: jumpCutS)
+        let (times, envelope, _) = motionEnvelope(bySource: bySource)
         guard !envelope.isEmpty else { return DetectedMotionSequence(items: []) }
 
         let peakIndices = findAllPeaks(envelope: envelope)
@@ -42,7 +40,7 @@ struct SessionAnalyzer {
         var items: [DetectedMotionSequence.Item] = []
         for peakIdx in peakIndices {
             let peakRelT  = times[peakIdx]
-            let peakAbsT  = globalT0 + jumpCutS + peakRelT
+            let peakAbsT  = globalT0 + peakRelT
             let lo        = peakAbsT - Self.windowPreS
             let hi        = peakAbsT + Self.windowPostS
             let window    = samples.filter { $0.timestamp >= lo && $0.timestamp <= hi }
@@ -59,15 +57,14 @@ struct SessionAnalyzer {
     // MARK: - Motion Envelope
 
     private func motionEnvelope(
-        bySource: [String: [MotionRuleClassifier.Row]],
-        jumpCutS: Double
+        bySource: [String: [MotionRuleClassifier.Row]]
     ) -> (times: [Double], envelope: [Double], duration: Double) {
 
-        // Duration = longest source segment after jump cut
+        // Duration = longest source segment from the beginning
         var duration = 0.0
         for rows in bySource.values {
             guard rows.count >= 5 else { continue }
-            let d = rows.last!.t - rows.first!.t - jumpCutS
+            let d = rows.last!.t - rows.first!.t
             if d > duration { duration = d }
         }
         guard duration > 0 else { return ([], [], 0) }
@@ -78,10 +75,10 @@ struct SessionAnalyzer {
         for source in MotionRuleClassifier.sources {
             guard let rows = bySource[source], rows.count >= 5 else { continue }
             let t0 = rows.first!.t
-            let segment = rows.filter { $0.t - t0 - jumpCutS >= 0 && $0.t - t0 - jumpCutS < duration }
+            let segment = rows.filter { $0.t - t0 >= 0 && $0.t - t0 < duration }
             guard segment.count >= 5 else { continue }
 
-            let t    = segment.map { $0.t - t0 - jumpCutS }
+            let t    = segment.map { $0.t - t0 }
             let ax   = segment.map(\.ax), ay = segment.map(\.ay), az = segment.map(\.az)
             let gx   = segment.map(\.gx), gy = segment.map(\.gy), gz = segment.map(\.gz)
             let aM   = mag(ax, ay, az)
