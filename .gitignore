@@ -54,6 +54,7 @@ juho_data/
 
 # App-generated data directory
 Data/
+_unused_external/
 
 # Offline analysis workspace.
 # Track source & docs (scripts, plan/todolist, README, requirements), but ignore
