@@ -43,13 +43,27 @@ final class BoxingSessionManager: ObservableObject {
     /// Called on the main actor once analysis completes and stats are ready.
     var onAnalysisComplete: ((PHANTOMSessionStats) -> Void)?
 
-    // MARK: - Calibration State (Phase 5 d)
+    // MARK: - Calibration State (Phase 5 d / §8.4)
 
     /// True while a single calibration demo is being captured.
     @Published var isCalibrationCapturing = false
     /// Number of user calibration samples currently in the classifier reference.
     @Published var calibrationCount = 0
+    /// Preview of the just-captured demo (envelope + peak + crop window) shown for
+    /// review BEFORE it is committed to the reference. nil until a capture finishes.
+    @Published var lastCalibrationPreview: SessionAnalyzer.SegmentPreview?
+    /// Per-action record of when each calibration demo was committed (newest last).
+    /// Shown as a list ("Lead Jab — 6/5 20:57 (3 days ago)") in CalibrationView.
+    @Published var calibrationEntries: [CalibrationEntry] = []
     private var calibrationCapturing = false
+    /// Pending segment awaiting Confirm/Retry (captured but not yet appended).
+    private var pendingCalibration: (preview: SessionAnalyzer.SegmentPreview, label: String)?
+
+    struct CalibrationEntry: Codable, Identifiable {
+        var id: String { label }       // one entry per action (latest demo)
+        let label: String
+        let savedAt: Date
+    }
 
     // MARK: - Raw Buffer
 
@@ -62,10 +76,53 @@ final class BoxingSessionManager: ObservableObject {
 
     init() {
         classifier = try? MotionRuleClassifier.load()
+        loadCalibrationFromDisk()          // restore saved calibration (Phase 5b)
         wireCallbacks()
         bindPublished()
         if !UserDefaults.standard.bool(forKey: "phantomSafetyAlertShown") {
             showSafetyAlert = true
+        }
+    }
+
+    // MARK: - Calibration Persistence (Phase 5b — 1-set save/load)
+
+    private struct CalibrationStore: Codable {
+        var dim: Int                       // feature dimension (version/dim guard)
+        var vectors: [[Double]]
+        var labels: [String]
+        var entries: [CalibrationEntry]?   // per-action timestamps (optional = old files)
+    }
+
+    private var calibrationURL: URL {
+        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("calibration.json")
+    }
+
+    private func saveCalibrationToDisk() {
+        guard let classifier else { return }
+        let (vectors, labels) = classifier.exportCalibration()
+        if vectors.isEmpty {
+            try? FileManager.default.removeItem(at: calibrationURL)   // nothing to keep
+            return
+        }
+        let store = CalibrationStore(dim: classifier.featureDim, vectors: vectors,
+                                     labels: labels, entries: calibrationEntries)
+        let enc = JSONEncoder(); enc.dateEncodingStrategy = .iso8601
+        if let data = try? enc.encode(store) {
+            try? data.write(to: calibrationURL)
+        }
+    }
+
+    private func loadCalibrationFromDisk() {
+        let dec = JSONDecoder(); dec.dateDecodingStrategy = .iso8601
+        guard let classifier,
+              let data = try? Data(contentsOf: calibrationURL),
+              let store = try? dec.decode(CalibrationStore.self, from: data),
+              store.dim == classifier.featureDim                        // ignore stale (model changed)
+        else { return }
+        if classifier.loadCalibration(vectors: store.vectors, labels: store.labels) {
+            calibrationCount = classifier.calibrationCount
+            calibrationEntries = store.entries ?? []                    // old files: no timestamps
         }
     }
 
@@ -119,8 +176,10 @@ final class BoxingSessionManager: ObservableObject {
         isCalibrationCapturing = true
     }
 
-    /// Stop capturing and append the demo to the classifier under `label`.
-    /// Returns true if a valid segment was captured and added.
+    /// Stop capturing and PREVIEW the strongest segment (not yet committed).
+    /// Sets lastCalibrationPreview for the view to render (envelope + peak + crop
+    /// band). The caller then calls confirmCalibration() to keep it or
+    /// retryCalibration() to discard. Returns true if a usable segment was found.
     @discardableResult
     func stopCalibrationCapture(label: String) -> Bool {
         guard calibrationCapturing else { return false }
@@ -136,20 +195,61 @@ final class BoxingSessionManager: ObservableObject {
 
         let samples = liveRawSamples
         liveRawSamples = []
+        lastCalibrationPreview = nil
+        pendingCalibration = nil
         guard let classifier, !samples.isEmpty else { return false }
 
-        // Cut the single strongest segment from the demo, then append it.
         let analyzer = SessionAnalyzer(classifier: classifier)
-        guard let window = analyzer.strongestSegment(samples: samples) else { return false }
-        let added = classifier.addCalibrationSample(samples: window, label: label)
-        if added { calibrationCount = classifier.calibrationCount }
+        guard let preview = analyzer.strongestSegmentPreview(samples: samples) else { return false }
+        lastCalibrationPreview = preview
+        pendingCalibration = (preview, label)
+        return true
+    }
+
+    /// Commit the pending previewed segment to the KNN reference. Returns true on success.
+    @discardableResult
+    func confirmCalibration() -> Bool {
+        guard let classifier, let pending = pendingCalibration else { return false }
+        let added = classifier.addCalibrationSample(samples: pending.preview.window,
+                                                    label: pending.label)
+        if added {
+            calibrationCount = classifier.calibrationCount
+            // K-CAL: one entry per action — update timestamp if re-calibrated.
+            calibrationEntries.removeAll { $0.label == pending.label }
+            calibrationEntries.append(CalibrationEntry(label: pending.label, savedAt: Date()))
+            saveCalibrationToDisk()
+        }
+        pendingCalibration = nil
+        lastCalibrationPreview = nil
         return added
+    }
+
+    /// Discard the pending preview WITHOUT committing (retry this action).
+    func retryCalibration() {
+        pendingCalibration = nil
+        lastCalibrationPreview = nil
+    }
+
+    /// Remove the most recently committed calibration sample (undo last action).
+    @discardableResult
+    func undoLastCalibration() -> Bool {
+        let ok = classifier?.removeLastCalibrationSample() ?? false
+        if ok {
+            calibrationCount = classifier?.calibrationCount ?? 0
+            if !calibrationEntries.isEmpty { calibrationEntries.removeLast() }   // K-CAL
+            saveCalibrationToDisk()
+        }
+        return ok
     }
 
     /// Discard all user calibration, reverting to the factory model.
     func resetCalibration() {
         classifier?.resetCalibration()
         calibrationCount = classifier?.calibrationCount ?? 0
+        calibrationEntries = []            // K-CAL
+        pendingCalibration = nil
+        lastCalibrationPreview = nil
+        saveCalibrationToDisk()            // removes the file (empty calibration)
     }
 
     // MARK: - Raw Capture

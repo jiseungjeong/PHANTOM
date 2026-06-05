@@ -191,11 +191,53 @@ final class MotionRuleClassifier {
         return true
     }
 
+    /// Remove the most recently appended calibration sample (for "retry this
+    /// action"). Only removes user-added samples, never the factory reference.
+    @discardableResult
+    func removeLastCalibrationSample() -> Bool {
+        guard calibrationCount > 0 else { return false }
+        trainVectors.removeLast()
+        trainLabels.removeLast()
+        calibrationCount -= 1
+        return true
+    }
+
     /// Drop all user calibration, reverting to the factory reference.
     func resetCalibration() {
         trainVectors = params.trainVectors
         trainLabels  = params.trainLabels
         calibrationCount = 0
+    }
+
+    // MARK: - Calibration Persistence (Phase 5b — 1-set save/load)
+    //
+    // Export/load the user calibration as preprocessed vectors + labels (P1=A).
+    // The vectors are already in the frozen-preprocessing space, so loading just
+    // appends them back. featureDim guards against a model whose preprocessing
+    // changed (dimension mismatch -> ignore the stale calibration).
+
+    /// Dimension of stored calibration vectors (post variance+scaler+normalizer).
+    var featureDim: Int { params.trainVectors.first?.count ?? 0 }
+
+    /// The user-added calibration vectors/labels (factory reference excluded).
+    func exportCalibration() -> (vectors: [[Double]], labels: [String]) {
+        guard calibrationCount > 0 else { return ([], []) }
+        let start = params.trainVectors.count
+        return (Array(trainVectors[start...]), Array(trainLabels[start...]))
+    }
+
+    /// Replace any current calibration with the given vectors/labels (factory kept).
+    /// Ignores vectors whose dimension doesn't match this model (stale calibration).
+    @discardableResult
+    func loadCalibration(vectors: [[Double]], labels: [String]) -> Bool {
+        resetCalibration()
+        guard vectors.count == labels.count, !vectors.isEmpty else { return false }
+        let dim = featureDim
+        guard vectors.allSatisfy({ $0.count == dim }) else { return false }  // version/dim guard
+        trainVectors.append(contentsOf: vectors)
+        trainLabels.append(contentsOf: labels)
+        calibrationCount = vectors.count
+        return true
     }
 
     // MARK: - Source Grouping

@@ -54,10 +54,24 @@ struct SessionAnalyzer {
         return DetectedMotionSequence(items: items)
     }
 
-    /// Calibration helper (Phase 5 d): cut the SINGLE strongest segment from a demo
-    /// recording (one action). Picks the highest-envelope peak and returns its
-    /// ±0.5/+0.8 s window, same windowing as analyze(). Returns nil if no peak.
-    func strongestSegment(samples: [TimeSeriesRawSample]) -> [TimeSeriesRawSample]? {
+    /// Visualization-rich result of cutting one demo (Phase 5 d / §8.4 ②).
+    /// `window` is the samples to classify/append; `times`/`envelope` are the motion
+    /// curve (relative seconds from t0); `peakTimeS` is the detected peak; `[windowStartS,
+    /// windowEndS]` is the cropped span — all in the SAME relative-second axis so the
+    /// calibration view can draw curve + peak line + crop band like viz_segmentation.
+    struct SegmentPreview {
+        let window: [TimeSeriesRawSample]
+        let times: [Double]
+        let envelope: [Double]
+        let peakTimeS: Double
+        let windowStartS: Double
+        let windowEndS: Double
+    }
+
+    /// Calibration helper: cut the SINGLE strongest segment from a one-action demo
+    /// and return it WITH visualization data. Picks the highest-envelope peak and
+    /// the same ±0.5/+0.8 s window as analyze(). Returns nil if no usable peak.
+    func strongestSegmentPreview(samples: [TimeSeriesRawSample]) -> SegmentPreview? {
         guard !samples.isEmpty else { return nil }
         let bySource = classifier.group(samples)
         let globalT0 = bySource.values.compactMap { $0.first?.t }.min() ?? 0.0
@@ -74,11 +88,23 @@ struct SessionAnalyzer {
         } else {
             return nil
         }
-        let peakAbsT = globalT0 + times[bestIdx]
+        let peakRelT = times[bestIdx]
+        let peakAbsT = globalT0 + peakRelT
         let lo = peakAbsT - Self.windowPreS
         let hi = peakAbsT + Self.windowPostS
         let window = samples.filter { $0.timestamp >= lo && $0.timestamp <= hi }
-        return window.count >= 5 ? window : nil
+        guard window.count >= 5 else { return nil }
+        return SegmentPreview(
+            window: window, times: times, envelope: envelope,
+            peakTimeS: peakRelT,
+            windowStartS: max(peakRelT - Self.windowPreS, times.first ?? 0),
+            windowEndS:   min(peakRelT + Self.windowPostS, times.last ?? peakRelT)
+        )
+    }
+
+    /// Back-compat thin wrapper: just the window samples.
+    func strongestSegment(samples: [TimeSeriesRawSample]) -> [TimeSeriesRawSample]? {
+        strongestSegmentPreview(samples: samples)?.window
     }
 
     // MARK: - Motion Envelope
