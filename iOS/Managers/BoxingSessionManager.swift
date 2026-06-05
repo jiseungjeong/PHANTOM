@@ -43,6 +43,14 @@ final class BoxingSessionManager: ObservableObject {
     /// Called on the main actor once analysis completes and stats are ready.
     var onAnalysisComplete: ((PHANTOMSessionStats) -> Void)?
 
+    // MARK: - Calibration State (Phase 5 d)
+
+    /// True while a single calibration demo is being captured.
+    @Published var isCalibrationCapturing = false
+    /// Number of user calibration samples currently in the classifier reference.
+    @Published var calibrationCount = 0
+    private var calibrationCapturing = false
+
     // MARK: - Raw Buffer
 
     private var liveRawSamples: [TimeSeriesRawSample] = []
@@ -90,6 +98,59 @@ final class BoxingSessionManager: ObservableObject {
     }
 
     func resetMotionSequence() { motionSequence = nil }
+
+    // MARK: - Calibration Capture (Phase 5 d)
+    //
+    // Reuses the same sensor flow as a session, but instead of analyzing the buffer
+    // it cuts the strongest single segment and appends it (labeled) to the KNN
+    // reference via MotionRuleClassifier.addCalibrationSample. One call per action
+    // demo; the user is guided through the 10 actions by the calibration view.
+
+    /// Begin capturing one calibration demo. Sensors start buffering.
+    func startCalibrationCapture() {
+        guard !isSessionActive, !calibrationCapturing, classifier != nil else { return }
+        fusionEngine.startSession()
+        let anchor = fusionEngine.anchorTs
+        beginRawCapture(anchor: anchor)
+        phoneMotion.startTracking(anchorTs: anchor)
+        headphoneMotion.startTracking(anchorTs: anchor)
+        watchConnectivity.sendStartSession(anchorTs: anchor, collectRaw: true)
+        calibrationCapturing = true
+        isCalibrationCapturing = true
+    }
+
+    /// Stop capturing and append the demo to the classifier under `label`.
+    /// Returns true if a valid segment was captured and added.
+    @discardableResult
+    func stopCalibrationCapture(label: String) -> Bool {
+        guard calibrationCapturing else { return false }
+        fusionEngine.stopSession()
+        phoneMotion.stopTracking()
+        headphoneMotion.stopTracking()
+        watchConnectivity.sendStopSession()
+        phoneMotion.onRawSample = nil
+        headphoneMotion.onRawSample = nil
+        watchConnectivity.onRawWatchBatch = nil
+        calibrationCapturing = false
+        isCalibrationCapturing = false
+
+        let samples = liveRawSamples
+        liveRawSamples = []
+        guard let classifier, !samples.isEmpty else { return false }
+
+        // Cut the single strongest segment from the demo, then append it.
+        let analyzer = SessionAnalyzer(classifier: classifier)
+        guard let window = analyzer.strongestSegment(samples: samples) else { return false }
+        let added = classifier.addCalibrationSample(samples: window, label: label)
+        if added { calibrationCount = classifier.calibrationCount }
+        return added
+    }
+
+    /// Discard all user calibration, reverting to the factory model.
+    func resetCalibration() {
+        classifier?.resetCalibration()
+        calibrationCount = classifier?.calibrationCount ?? 0
+    }
 
     // MARK: - Raw Capture
 

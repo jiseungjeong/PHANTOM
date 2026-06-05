@@ -1,0 +1,27 @@
+{
+  "model": "KNN(n=1, weights=distance, metric=manhattan), FULL (no feature-selection)",
+  "cohort": [
+    "JIHO",
+    "JUHO",
+    "SEUNG",
+    "SHIM"
+  ],
+  "n_train_samples": 598,
+  "n_classes": 10,
+  "labels": [
+    "Lead Hook",
+    "Lead Jab",
+    "Lead Uppercut",
+    "Left Roll",
+    "Left Slip",
+    "Rear Hook",
+    "Rear Jab",
+    "Rear Uppercut",
+    "Right Roll",
+    "Right Slip"
+  ],
+  "reported_metric_LOSO_macro_f1_full": 0.581,
+  "reported_metric_LOSO_macro_f1_sel_best": 0.605,
+  "calibration_m1_macro_f1_full": 0.887,
+  "honesty_note": "Reported accuracy is the LEAVE-ONE-SUBJECT-OUT estimate (unseen person). This deployed model is REFIT on all shoe-4 subjects, so it is a different model; its training accuracy is an overfit indicator, not generalization. Real-world use applies on-device few-shot calibration (m=1 -> ~0.89)."
+}

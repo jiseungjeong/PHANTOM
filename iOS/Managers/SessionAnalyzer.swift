@@ -54,6 +54,33 @@ struct SessionAnalyzer {
         return DetectedMotionSequence(items: items)
     }
 
+    /// Calibration helper (Phase 5 d): cut the SINGLE strongest segment from a demo
+    /// recording (one action). Picks the highest-envelope peak and returns its
+    /// ±0.5/+0.8 s window, same windowing as analyze(). Returns nil if no peak.
+    func strongestSegment(samples: [TimeSeriesRawSample]) -> [TimeSeriesRawSample]? {
+        guard !samples.isEmpty else { return nil }
+        let bySource = classifier.group(samples)
+        let globalT0 = bySource.values.compactMap { $0.first?.t }.min() ?? 0.0
+        let (times, envelope, _) = motionEnvelope(bySource: bySource)
+        guard !envelope.isEmpty else { return nil }
+
+        let peaks = findAllPeaks(envelope: envelope)
+        // Choose the peak with the largest envelope value; fall back to global argmax.
+        let bestIdx: Int
+        if let p = peaks.max(by: { envelope[$0] < envelope[$1] }) {
+            bestIdx = p
+        } else if let g = envelope.indices.max(by: { envelope[$0] < envelope[$1] }) {
+            bestIdx = g
+        } else {
+            return nil
+        }
+        let peakAbsT = globalT0 + times[bestIdx]
+        let lo = peakAbsT - Self.windowPreS
+        let hi = peakAbsT + Self.windowPostS
+        let window = samples.filter { $0.timestamp >= lo && $0.timestamp <= hi }
+        return window.count >= 5 ? window : nil
+    }
+
     // MARK: - Motion Envelope
 
     private func motionEnvelope(

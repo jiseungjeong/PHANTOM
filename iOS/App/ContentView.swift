@@ -15,6 +15,12 @@ struct ContentView: View {
                     .environmentObject(historyManager)
                     .navigationTitle("Boxing Tracker")
                     .toolbar {
+                        ToolbarItem(placement: .navigationBarLeading) {
+                            NavigationLink("Calibrate") {
+                                CalibrationView()
+                                    .environmentObject(sessionManager)
+                            }
+                        }
                         ToolbarItem(placement: .navigationBarTrailing) {
                             NavigationLink("Stats") {
                                 StatsView()

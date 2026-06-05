@@ -12,7 +12,10 @@ import Foundation
 //   4. Compute 1-NN Manhattan distance against 450 stored training vectors; return
 //      the label of the nearest neighbour and distance-based confidence.
 
-struct MotionRuleClassifier {
+// Reference type (class): on-device calibration mutates the KNN reference in place,
+// and the same instance is shared (held by BoxingSessionManager). A struct would
+// copy on mutation, so appended calibration samples would not persist.
+final class MotionRuleClassifier {
 
     // MARK: - Public Result
 
@@ -45,6 +48,18 @@ struct MotionRuleClassifier {
 
     private let params: KNNParams
 
+    // MARK: - KNN reference set (mutable for on-device calibration)
+    //
+    // The factory reference comes from params (frozen). On-device calibration
+    // APPENDS the end user's own demonstrated samples here (Phase 5 d): the
+    // preprocessing (variance mask / RobustScaler / Normalizer) stays frozen and
+    // only the reference set grows — exactly the experiment protocol that lifted
+    // unseen-person macro-F1 ~0.57 -> ~0.90 with one demo per action.
+    private var trainVectors: [[Double]]
+    private var trainLabels:  [String]
+    /// Number of user calibration samples appended on top of the factory reference.
+    private(set) var calibrationCount: Int = 0
+
     // MARK: - Loading
 
     enum LoadError: Error { case resourceMissing, decodeFailed(Error) }
@@ -62,11 +77,22 @@ struct MotionRuleClassifier {
         }
     }
 
-    private init(params: KNNParams) { self.params = params }
+    private init(params: KNNParams) {
+        self.params = params
+        self.trainVectors = params.trainVectors   // factory reference (copied, mutable)
+        self.trainLabels  = params.trainLabels
+    }
 
     // MARK: - Public Classification
 
     static let singleMotionLabels: Set<String> = [
+        "Lead Jab", "Lead Hook", "Lead Uppercut",
+        "Rear Jab", "Rear Hook", "Rear Uppercut",
+        "Left Slip", "Right Slip", "Left Roll", "Right Roll",
+    ]
+
+    /// Ordered action list for the calibration flow (one demo per action, in order).
+    static let calibrationOrder: [String] = [
         "Lead Jab", "Lead Hook", "Lead Uppercut",
         "Rear Jab", "Rear Hook", "Rear Uppercut",
         "Left Slip", "Right Slip", "Left Roll", "Right Roll",
@@ -108,32 +134,68 @@ struct MotionRuleClassifier {
 
     // MARK: - KNN Inference
 
-    private func predictKNN(features: [String: Double]) -> (label: String, confidence: Double) {
-        // 1. Build raw vector — missing features default to 0.0 (SimpleImputer)
+    /// Turn a raw feature dict into the preprocessed vector the KNN compares against.
+    /// Mirrors the sklearn pipeline (frozen): SimpleImputer(0) -> VarianceThreshold
+    /// -> RobustScaler -> Normalizer(l2). Used by BOTH prediction and calibration so
+    /// appended user samples live in the exact same space as the factory reference.
+    private func transform(features: [String: Double]) -> [Double] {
+        // 1. raw vector — missing features default to 0.0 (SimpleImputer)
         var x = params.featureNames.map { features[$0] ?? 0.0 }
-
         // 2. VarianceThreshold — keep only selected columns
         x = zip(x, params.varianceMask).compactMap { $1 ? $0 : nil }
-
         // 3. RobustScaler: (x - center) / scale
         for i in 0..<x.count {
             x[i] = (x[i] - params.scalerCenter[i]) / params.scalerScale[i]
         }
-
         // 4. Normalizer l2
         let norm = x.reduce(0.0) { $0 + $1 * $1 }.squareRoot()
         if norm > 1e-9 { x = x.map { $0 / norm } }
+        return x
+    }
 
-        // 5. 1-NN Manhattan distance
+    private func predictKNN(features: [String: Double]) -> (label: String, confidence: Double) {
+        let x = transform(features: features)
+        // 1-NN Manhattan distance over the (possibly calibrated) reference set
         var bestDist = Double.infinity
         var bestLabel = ""
-        for (vec, label) in zip(params.trainVectors, params.trainLabels) {
+        for (vec, label) in zip(trainVectors, trainLabels) {
             var dist = 0.0
             for i in 0..<x.count { dist += abs(x[i] - vec[i]) }
             if dist < bestDist { bestDist = dist; bestLabel = label }
         }
         let confidence = bestDist < 1e-9 ? 1.0 : 1.0 / (1.0 + bestDist)
         return (bestLabel, confidence)
+    }
+
+    // MARK: - On-Device Calibration (Phase 5 d)
+
+    /// Append one of the END USER's demonstrated segments, labeled, to the KNN
+    /// reference. Preprocessing stays frozen; only the reference grows. Returns
+    /// true if a valid segment was captured. The effect is immediate (next
+    /// classify() uses the enlarged reference).
+    @discardableResult
+    func addCalibrationSample(samples: [TimeSeriesRawSample], label: String) -> Bool {
+        let bySource = group(samples)
+        guard bySource.values.reduce(0, { $0 + $1.count }) >= 5 else { return false }
+        var features: [String: Double] = [
+            "total_rows": Double(bySource.values.reduce(0) { $0 + $1.count }),
+        ]
+        for source in Self.sources {
+            addSourceFeatures(into: &features, source: source, rows: bySource[source] ?? [])
+        }
+        let hasSegment = Self.sources.contains { (features["\(prefix($0))_n"] ?? 0) >= 5 }
+        guard hasSegment else { return false }
+        trainVectors.append(transform(features: features))
+        trainLabels.append(label)
+        calibrationCount += 1
+        return true
+    }
+
+    /// Drop all user calibration, reverting to the factory reference.
+    func resetCalibration() {
+        trainVectors = params.trainVectors
+        trainLabels  = params.trainLabels
+        calibrationCount = 0
     }
 
     // MARK: - Source Grouping
