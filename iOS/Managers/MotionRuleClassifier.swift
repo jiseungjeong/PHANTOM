@@ -2,14 +2,15 @@ import Foundation
 
 // MARK: - Motion KNN Classifier
 //
-// On-device classifier backed by the active-window KNN model trained on
-// JIHO, JUHO, and SHIM data (bundled as knn_params.json).
+// On-device classifier backed by the active-window KNN model trained on the
+// shoe-4 cohort (SEUNG, JIHO, JUHO, SHIM; JEONG excluded) — bundled as
+// knn_params.json.
 //
 // Pipeline (mirrors Python sklearn pipeline exactly):
 //   1. Group samples by source (Watch / iPhone / AirPods).
 //   2. Build the 491-feature vector (same keys as rule_base_classifier.add_source_features).
 //   3. Apply: SimpleImputer(0) → VarianceThreshold → RobustScaler → Normalizer(l2).
-//   4. Compute 1-NN Manhattan distance against 450 stored training vectors; return
+//   4. Compute 1-NN Manhattan distance against 598 stored training vectors; return
 //      the label of the nearest neighbour and distance-based confidence.
 
 // Reference type (class): on-device calibration mutates the KNN reference in place,
@@ -64,8 +65,10 @@ final class MotionRuleClassifier {
 
     enum LoadError: Error { case resourceMissing, decodeFailed(Error) }
 
-    static func load(bundle: Bundle = .main) throws -> MotionRuleClassifier {
-        guard let url = bundle.url(forResource: "knn_params", withExtension: "json") else {
+    /// `resource` selects the reference set: "knn_params" (single-only) or
+    /// "knn_params_combo" (single + selected combo windows, for fast-transition demo).
+    static func load(resource: String = "knn_params", bundle: Bundle = .main) throws -> MotionRuleClassifier {
+        guard let url = bundle.url(forResource: resource, withExtension: "json") else {
             throw LoadError.resourceMissing
         }
         let data = try Data(contentsOf: url)

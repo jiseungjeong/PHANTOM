@@ -67,6 +67,23 @@ struct SessionView: View {
     private var sessionContent: some View {
         durationCard
 
+        // Demo toggle: single-only vs combo-augmented KNN reference (fast-transition).
+        // featureDim is identical so user calibration carries across the toggle.
+        if session.comboAvailable && !session.isSessionActive {
+            Toggle(isOn: $session.usingCombo) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Combo-augmented reference")
+                        .font(.subheadline).fontWeight(.medium)
+                    Text(session.usingCombo
+                         ? "single + combo windows (fast transitions)"
+                         : "single-only")
+                        .font(.caption2).foregroundStyle(.secondary)
+                }
+            }
+            .padding()
+            .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 12))
+        }
+
         if session.isSessionActive {
             MetricCard(
                 title:  "Status",

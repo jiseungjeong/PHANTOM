@@ -29,6 +29,7 @@
 		7D04AE1EAFAB532421E970FE /* PhoneMotionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E411ACE81A03C4EC4A0B0C6 /* PhoneMotionManager.swift */; };
 		805217C62FD01780001536FE /* SessionAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 805217C52FD01780001536FE /* SessionAnalyzer.swift */; };
 		805217C82FD01910001536FE /* knn_params.json in Resources */ = {isa = PBXBuildFile; fileRef = 805217C72FD01910001536FE /* knn_params.json */; };
+		CB0000010000000000000001 /* knn_params_combo.json in Resources */ = {isa = PBXBuildFile; fileRef = CB0000020000000000000002 /* knn_params_combo.json */; };
 		805217CA2FD2A2FA001536FE /* CalibrationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 805217C92FD2A2FA001536FE /* CalibrationView.swift */; };
 		8BD503430C7960732849815D /* ConnectionBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = A981092844965F0C0AE9F893 /* ConnectionBar.swift */; };
 		8F17201552746848FDCE6831 /* SessionToggleButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2305E24AB6D3993BC6E9C433 /* SessionToggleButton.swift */; };
@@ -111,6 +112,7 @@
 		7CA5C5984787C4F567D8E16B /* FileUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileUtils.swift; sourceTree = "<group>"; };
 		805217C52FD01780001536FE /* SessionAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionAnalyzer.swift; sourceTree = "<group>"; };
 		805217C72FD01910001536FE /* knn_params.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = knn_params.json; sourceTree = "<group>"; };
+		CB0000020000000000000002 /* knn_params_combo.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = knn_params_combo.json; sourceTree = "<group>"; };
 		805217C92FD2A2FA001536FE /* CalibrationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalibrationView.swift; sourceTree = "<group>"; };
 		86D052C8B42C88359C2E12BF /* WorkoutHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutHistory.swift; sourceTree = "<group>"; };
 		924F8D6885D5E3DA9078EFA2 /* DataCollectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataCollectView.swift; sourceTree = "<group>"; };
@@ -217,6 +219,7 @@
 			isa = PBXGroup;
 			children = (
 				805217C72FD01910001536FE /* knn_params.json */,
+				CB0000020000000000000002 /* knn_params_combo.json */,
 				A1B2C3D4E5F600112233BB02 /* single_action_tree.json */,
 			);
 			path = Resources;
@@ -365,6 +368,7 @@
 			files = (
 				A1B2C3D4E5F600112233AA02 /* single_action_tree.json in Resources */,
 				805217C82FD01910001536FE /* knn_params.json in Resources */,
+				CB0000010000000000000001 /* knn_params_combo.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

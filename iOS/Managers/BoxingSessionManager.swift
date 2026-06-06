@@ -23,8 +23,25 @@ final class BoxingSessionManager: ObservableObject {
     private let headphoneMotion   = HeadphoneMotionManager()
     private let watchConnectivity = WatchConnectivityManager.shared
 
-    /// nil when knn_params.json is missing or fails to decode.
-    let classifier: MotionRuleClassifier?
+    /// Two reference sets: single-only (knn_params) and combo-augmented
+    /// (knn_params_combo = single + selected combo windows, for fast-transition demo).
+    /// `usingCombo` toggles which one `classifier` returns. featureDim is identical
+    /// (469) for both, so user calibration stays compatible across the toggle.
+    private let singleClassifier: MotionRuleClassifier?
+    private let comboClassifier: MotionRuleClassifier?
+    /// When true, classification uses the combo-augmented reference (demo toggle).
+    @Published var usingCombo = false
+    /// Active classifier (nil when the selected reference failed to load).
+    var classifier: MotionRuleClassifier? {
+        (usingCombo ? comboClassifier : singleClassifier) ?? singleClassifier
+    }
+    /// True when the combo reference is available (to show/hide the toggle in UI).
+    var comboAvailable: Bool { comboClassifier != nil }
+    /// Both reference sets — calibration is applied to BOTH so toggling preserves it
+    /// (featureDim is identical, so the same user samples are valid for either).
+    private var allClassifiers: [MotionRuleClassifier] {
+        [singleClassifier, comboClassifier].compactMap { $0 }
+    }
 
     // MARK: - Published State
 
@@ -75,7 +92,8 @@ final class BoxingSessionManager: ObservableObject {
     // MARK: - Init
 
     init() {
-        classifier = try? MotionRuleClassifier.load()
+        singleClassifier = try? MotionRuleClassifier.load(resource: "knn_params")
+        comboClassifier  = try? MotionRuleClassifier.load(resource: "knn_params_combo")
         loadCalibrationFromDisk()          // restore saved calibration (Phase 5b)
         wireCallbacks()
         bindPublished()
@@ -120,7 +138,12 @@ final class BoxingSessionManager: ObservableObject {
               let store = try? dec.decode(CalibrationStore.self, from: data),
               store.dim == classifier.featureDim                        // ignore stale (model changed)
         else { return }
-        if classifier.loadCalibration(vectors: store.vectors, labels: store.labels) {
+        // load into BOTH references (same featureDim) so the toggle keeps calibration
+        var loaded = false
+        for c in allClassifiers {
+            loaded = c.loadCalibration(vectors: store.vectors, labels: store.labels) || loaded
+        }
+        if loaded {
             calibrationCount = classifier.calibrationCount
             calibrationEntries = store.entries ?? []                    // old files: no timestamps
         }
@@ -210,8 +233,12 @@ final class BoxingSessionManager: ObservableObject {
     @discardableResult
     func confirmCalibration() -> Bool {
         guard let classifier, let pending = pendingCalibration else { return false }
-        let added = classifier.addCalibrationSample(samples: pending.preview.window,
-                                                    label: pending.label)
+        // apply to BOTH references so the toggle keeps the same calibration
+        var added = false
+        for c in allClassifiers {
+            added = c.addCalibrationSample(samples: pending.preview.window,
+                                           label: pending.label) || added
+        }
         if added {
             calibrationCount = classifier.calibrationCount
             // K-CAL: one entry per action — update timestamp if re-calibrated.
@@ -233,7 +260,8 @@ final class BoxingSessionManager: ObservableObject {
     /// Remove the most recently committed calibration sample (undo last action).
     @discardableResult
     func undoLastCalibration() -> Bool {
-        let ok = classifier?.removeLastCalibrationSample() ?? false
+        var ok = false
+        for c in allClassifiers { ok = c.removeLastCalibrationSample() || ok }
         if ok {
             calibrationCount = classifier?.calibrationCount ?? 0
             if !calibrationEntries.isEmpty { calibrationEntries.removeLast() }   // K-CAL
@@ -244,7 +272,7 @@ final class BoxingSessionManager: ObservableObject {
 
     /// Discard all user calibration, reverting to the factory model.
     func resetCalibration() {
-        classifier?.resetCalibration()
+        for c in allClassifiers { c.resetCalibration() }
         calibrationCount = classifier?.calibrationCount ?? 0
         calibrationEntries = []            // K-CAL
         pendingCalibration = nil
