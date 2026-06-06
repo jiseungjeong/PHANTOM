@@ -5,7 +5,7 @@ Paper: Hanada et al., "BoxerSense: Punch Detection and Classification Using IMUs
        ABC 2021 / Springer SIST 291 (2022), DOI 10.1007/978-981-19-0361-8_6.
 
 Goal: evaluate the BoxerSense method under **exactly our conditions** (our 5-subject
-      data, shoe-4 cohort, same segmentation, same LOSO) -> fair comparison against
+      data, shoe-5 cohort, same segmentation, same LOSO) -> fair comparison against
       our best (KNN+sel, macro-F1 0.605).
 
 Fairness: on the same action segments (choose_real_peaks+uniform_windows), only the
@@ -19,7 +19,7 @@ Fairness: on the same action segments (choose_real_peaks+uniform_windows), only 
    - RF/KNN are distance-based, so features are [0,1] normalized (stated in the paper).
  segmentation (§3.3): Butterworth(2nd,1Hz)+dual-threshold. -> differs from our
    structure (jump + 5 reps), so not usable as-is. **Share our segmentation** (fair-comparison decision).
- evaluation: paper uses PD 10-fold + PI leave-one-person-out. Ours = shoe-4 LOSO (=PI) primary metric.
+ evaluation: paper uses PD 10-fold + PI leave-one-person-out. Ours = shoe-5 LOSO (=PI) primary metric.
 
 NOTE: all 126 BoxerSense features **already exist** in our single_dataset.json
    (verified, 0 missing). They were extracted from the same segments, so we just
@@ -99,7 +99,7 @@ def main() -> None:
     cols, picked = boxersense_features(feats)
     X = Xc[:, cols]
     print("# Phase 3.5 — baseline: BoxerSense (applied to our setup)")
-    print(f"  shoe-4 cohort {len(y)} samples / {len(labels)} classes")
+    print(f"  shoe-5 cohort {len(y)} samples / {len(labels)} classes")
     print(f"  BoxerSense features: {len(picked)} (7 stats x 6 axes x 3 devices, target 126)\n")
 
     print(f"  {'model':14s} {'LOSO acc':>9s} {'macro-F1':>9s} {'min~max':>12s}")
@@ -119,7 +119,7 @@ def main() -> None:
         print(f"    {lab:16s} F1={f:.3f}")
 
     # ── Comparison table vs our method ───────────────────────────────────────
-    OUR_BEST = 0.605   # Phase 3: KNN + feature-selection, shoe-4 LOSO macro-F1
+    OUR_BEST = 0.605   # Phase 3: KNN + feature-selection, shoe-5 LOSO macro-F1
     print("\n## Comparison (same data, segmentation, LOSO)")
     print(f"  {'method':28s} {'feature':>9s} {'LOSO macro-F1':>14s}")
     print(f"  {'BoxerSense (' + best + ')':28s} {len(picked):>9d} {bf1:>14.3f}")

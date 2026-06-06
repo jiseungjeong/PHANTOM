@@ -254,7 +254,7 @@ def main() -> None:
     print(f"  control) same train -> SEUNG(shoes, same person) acc={seung_acc:.4f}")
     print(f"  -> barefoot({env_acc:.2f}) vs shoes({seung_acc:.2f}) gap = environment effect for the same person")
 
-    print("\n## Lowest 5 per-class F1 (shoe-4 LOSO — most-confused classes)")
+    print("\n## Lowest 5 per-class F1 (shoe-5 LOSO — most-confused classes)")
     for lab, f in sorted(lo["per_class_f1"].items(), key=lambda x: x[1])[:5]:
         print(f"    {lab:16s} F1={f:.3f}")
     print("\n# Engine verification done. (Phase 3 feeds multiple candidates into nested_loso.)")

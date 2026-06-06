@@ -164,6 +164,29 @@ def subject_from_path(path: Path) -> str:
     return path.parent.name.replace("_data", "").upper()
 
 
+# ★ Left/Right Slip label correction (2026-06-06). The AirPods yaw (gyroZ) sign at
+# the slip peak splits subjects into two opposite groups: {JIHO, SHIM} (treated as
+# the correct reference) vs {SEUNG, JO, JUHO}, who demonstrated/labeled Left/Right
+# Slip mirrored. Swapping {SEUNG,JO,JUHO}'s Left<->Right Slip cut the L/R-Slip
+# confusion ~33%->~5% and raised LOSO macro-F1 0.599->0.659 (probe_swap2). Applied
+# at label-parse time so BOTH single and combo (sequence tokens) are corrected, with
+# the raw files untouched. (See plan §9.7.)
+SLIP_SWAP_SUBJECTS = {"SEUNG", "JO", "JUHO"}
+
+
+def _swap_slip_tokens(label: str) -> str:
+    # swap Left Slip <-> Right Slip within a label (single OR combo "a-b-c")
+    out = []
+    for tok in label.split("-"):
+        if tok == "Left Slip":
+            out.append("Right Slip")
+        elif tok == "Right Slip":
+            out.append("Left Slip")
+        else:
+            out.append(tok)
+    return "-".join(out)
+
+
 def label_from_path(path: Path) -> str | None:
     import re
     m = re.match(r"^(.*)_(\d{8})_(\d{6})$", path.stem)
@@ -175,7 +198,11 @@ def label_from_path(path: Path) -> str | None:
     if parts and parts[-1] == "Watch":
         parts = parts[:-1]
     label = " ".join(parts).replace("-", " - ")
-    return re.sub(r"\s+", " ", label).strip().replace(" - ", "-")
+    label = re.sub(r"\s+", " ", label).strip().replace(" - ", "-")
+    subject = path.parent.name.replace("_data", "").upper()
+    if subject in SLIP_SWAP_SUBJECTS and "Slip" in label:
+        label = _swap_slip_tokens(label)
+    return label
 
 
 def main() -> None:

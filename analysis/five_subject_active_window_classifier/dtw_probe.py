@@ -2,11 +2,11 @@
 """DTW probe (stage 1) — does DTW beat our KNN on DEFENSE actions? (plan §9.9)
 
 Light, fair check inspired by Thomas et al. (UbiComp'24, earable boxing defense,
-DTW+DBA). Question: on the SAME shoe-4 LOSO, same 4 defense classes, does 1-NN DTW
+DTW+DBA). Question: on the SAME shoe-5 LOSO, same 4 defense classes, does 1-NN DTW
 on raw windowed time-series beat our feature-based KNN?
 
 Fairness: both restricted to the 4 defense classes (Left/Right Slip, Left/Right
-Roll), shoe-4, LOSO. Not compared against the 10-class KNN.
+Roll), shoe-5, LOSO. Not compared against the 10-class KNN.
 
 Time-series: re-segment defense files with phase1 (choose_real_peaks +
 uniform_windows), pull each window's raw signal. Axis configs tried:
@@ -127,7 +127,7 @@ def _window_series(data, lo, hi, axis_cfg, jump):
 
 
 def collect_windows(axis_cfg, classes, want_files=False):
-    """Return series[], labels[], subjects[] (+files[] if want_files) over shoe-4
+    """Return series[], labels[], subjects[] (+files[] if want_files) over shoe-5
     single files for `classes`. files[] = source filename per window (for the
     file-separated calibration protocol)."""
     series, labels, subjects, files = [], [], [], []
@@ -258,7 +258,7 @@ def loso_dba(series, labels, subjects, classes):
 
 
 def knn_baseline(classes):
-    """Our feature KNN restricted to `classes`, shoe-4 LOSO."""
+    """Our feature KNN restricted to `classes`, shoe-5 LOSO."""
     from evaluation import load_dataset, split_cohort, loso
     import phase3_models as p3
     X, y, subj, files, feats, labels = load_dataset()
@@ -275,7 +275,7 @@ ALL10 = ["Lead Jab", "Lead Hook", "Lead Uppercut", "Rear Jab", "Rear Hook",
 
 
 def run_stage(name, classes, cfgs=("head", "norm3"), do_dba=True):
-    print(f"\n## {name} — {len(classes)} classes, shoe-4 LOSO")
+    print(f"\n## {name} — {len(classes)} classes, shoe-5 LOSO")
     knn_f1 = knn_baseline(classes)
     print(f"  KNN (our features) macro-F1 = {knn_f1:.3f}")
     best = ("KNN", knn_f1)
@@ -403,7 +403,7 @@ def run_dtw_calib(classes=None):
         done = {m: round(float(np.mean(fold_scores[m])), 3) for m in M if fold_scores[m]}
         print(f"  {ts:8s}: {done}")
 
-    print("\n## DTW(18ch,1-NN) + calibration curve (defense, shoe-4)")
+    print("\n## DTW(18ch,1-NN) + calibration curve (defense, shoe-5)")
     for m in M:
         if fold_scores[m]:
             print(f"  m={m}  macro-F1 = {np.mean(fold_scores[m]):.3f}")
@@ -433,7 +433,7 @@ def main() -> None:
         run_stage("ALL 10 (18ch)", ALL10, cfgs=("all18",), do_dba=False)
         print("\n  compare vs KNN 0.581 & calibration 0.90.")
         print("# done."); return
-    print("# DTW/DBA probe — shoe-4 LOSO (defense 4-class + all 10-class)")
+    print("# DTW/DBA probe — shoe-5 LOSO (defense 4-class + all 10-class)")
     run_stage("Stage 1: DEFENSE", DEFENSE)
     run_stage("Stage 2: ALL 10", ALL10)
     print("\n  verdict: DTW/DBA best vs KNN — +0.05↑ => adopt/hybrid; else cite-only.")

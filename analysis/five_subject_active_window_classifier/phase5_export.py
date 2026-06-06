@@ -78,7 +78,7 @@ def main() -> None:
     # Sanity: every train_vector should be unit L2 norm (Normalizer applied).
     norms = np.sqrt((Xn ** 2).sum(axis=1))
 
-    print("# Phase 5 (a) — KNN export (FULL, shoe-4)")
+    print("# Phase 5 (a) — KNN export (FULL, shoe-5)")
     print(f"  cohort: {sorted(set(subj))}  samples={n_samples}  classes={len(labels)}")
     print(f"  feature_names: {n_feat}  -> variance kept: {int(variance_mask.sum())}")
     print(f"  train_vectors: {Xn.shape}  (L2 norm min={norms.min():.4f} max={norms.max():.4f})")
@@ -96,7 +96,7 @@ def main() -> None:
         "calibration_m1_macro_f1_full": 0.887,
         "honesty_note": (
             "Reported accuracy is the LEAVE-ONE-SUBJECT-OUT estimate (unseen person). "
-            "This deployed model is REFIT on all shoe-4 subjects, so it is a different "
+            "This deployed model is REFIT on all shoe-5 subjects, so it is a different "
             "model; its training accuracy is an overfit indicator, not generalization. "
             "Real-world use applies on-device few-shot calibration (m=1 -> ~0.89)."
         ),

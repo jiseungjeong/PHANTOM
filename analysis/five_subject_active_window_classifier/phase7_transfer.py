@@ -30,7 +30,7 @@ COMBO_NPZ = THIS.parent / "reports" / "combo_windows.npz"
 
 
 def main() -> None:
-    # single-action data (shoe-4 cohort, same as all reported metrics)
+    # single-action data (shoe-5 cohort, same as all reported metrics)
     Xs, ys, ss, fs, sfeats, _ = load_dataset()
     (Xs, ys, ss, fs), _ = split_cohort(Xs, ys, ss, fs)
 
@@ -46,7 +46,7 @@ def main() -> None:
     Xs = Xs[:, s_idx]
     Xc = Xc_all[:, c_idx]
     print(f"# Phase 7 transfer — common features {len(common)}")
-    print(f"  single (shoe-4): {len(ys)}   combo windows: {len(yc)}")
+    print(f"  single (shoe-5): {len(ys)}   combo windows: {len(yc)}")
 
     subjects = sorted(set(sc.tolist()))
     # restrict combo labels to those the single classifier knows (all 10 are known)

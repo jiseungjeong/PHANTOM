@@ -138,7 +138,7 @@ def draw_ablation(ablation, out_png):
     ax.set_xticks(range(len(names)))
     ax.set_xticklabels(names, rotation=30, ha="right", fontsize=9)
     ax.set_ylabel("LOSO macro-F1"); ax.set_ylim(0, max(f1s) * 1.18)
-    ax.set_title("Device ablation (ExtraTrees, no feature-selection, shoe-4 LOSO)", fontsize=11)
+    ax.set_title("Device ablation (ExtraTrees, no feature-selection, shoe-5 LOSO)", fontsize=11)
     for b, v in zip(bars, f1s):
         ax.text(b.get_x() + b.get_width() / 2, v + 0.01, f"{v:.3f}", ha="center", fontsize=8)
     fig.tight_layout()
@@ -211,7 +211,7 @@ def main() -> None:
     feats_keep = [feats[i] for i in keep]
     Xk = X[:, keep]
 
-    print(f"# Phase 4 — metric & report (shoe-4, {len(y)} samples, {len(labels)} classes)")
+    print(f"# Phase 4 — metric & report (shoe-5, {len(y)} samples, {len(labels)} classes)")
     print(f"  best model = {BEST_NAME}; ablation model = ExtraTrees (no selection)\n")
 
     # ── P1: confusion matrices (LOSO + file-grouped) with the best model ─────────

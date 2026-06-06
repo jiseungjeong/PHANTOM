@@ -1251,7 +1251,7 @@ def main() -> None:
     if "--pattern" in _sys.argv:
         run_pattern(); return
     rows = collect()
-    print(f"# Phase 6 — combo segmentation diagnosis (shoe-4, {len(rows)} combo files)\n")
+    print(f"# Phase 6 — combo segmentation diagnosis (shoe-5, {len(rows)} combo files)\n")
 
     # ── T1: hit rate (detected peaks == combo length) ──────────────────────────
     by_len = defaultdict(lambda: [0, 0])      # len -> [total, exact]

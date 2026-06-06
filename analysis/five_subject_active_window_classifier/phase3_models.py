@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Phase 3 — model comparison (shoe-4 cohort). Design finalized: reflects M1/M3/M4/M5.
+"""Phase 3 — model comparison (shoe-5 cohort). Design finalized: reflects M1/M3/M4/M5.
 
 - 4 models: KNN(baseline) / ExtraTrees / SVC(RBF) / HistGBT
 - 2 feature sets (M4): full (489) / tree-importance selection (top K)
-- evaluation (M5): simple LOSO (shoe-4), best by group-mean macro-F1. Not nested.
+- evaluation (M5): simple LOSO (shoe-5), best by group-mean macro-F1. Not nested.
 - exclude meta features (M1): label-irrelevant meta such as repetition_count.
 - HistGBT max_iter 300->150 (small-data overfit / speed).
 - verdict (M3): >=0.70 achieved / 0.62~0.70 honest report / ~0.60 plateau -> data limit.
@@ -101,9 +101,9 @@ def main() -> None:
     # M1: exclude meta features
     keep = [i for i, n in enumerate(feats) if n not in META_FEATURES]
     X = X[:, keep]
-    print(f"# Phase 3 — model comparison (shoe-4, {len(y)} samples)")
+    print(f"# Phase 3 — model comparison (shoe-5, {len(y)} samples)")
     print(f"  feature: {len(feats)} -> meta excluded {len(keep)}  / {len(labels)} classes")
-    print(f"  baseline ref: KNN shoe-4 LOSO macro-F1 ~= 0.57\n")
+    print(f"  baseline ref: KNN shoe-5 LOSO macro-F1 ~= 0.57\n")
 
     print(f"  {'model':12s} {'feature':>10s} {'LOSO acc':>9s} {'macro-F1':>9s} {'min~max':>12s}")
     results = {}

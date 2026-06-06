@@ -7,7 +7,7 @@ Implements plan.md §9.8. Question: can a small amount of the END USER's own dat
 beats collecting more subjects.
 
 ── Protocol (peak-level calibration, FILE-separated) ────────────────────────────
-For each test subject S (shoe-4 + JEONG):
+For each test subject S (shoe-5 + JEONG):
   - S's 3 files per action are split: 1 calibration file vs 2 test files.
     * calibration peaks come ONLY from the calibration file
     * test peaks come ONLY from the 2 test files
@@ -64,7 +64,7 @@ import phase3_models as p3
 
 M_VALUES = [0, 1, 2, 3, 4, 5]          # calibration peaks per action
 PEAKS_PER_FILE = 5                     # nominal (a few files have 4; we clamp)
-# Calibration runs on the SHOE-4 cohort only (split_cohort excludes JEONG).
+# Calibration runs on the SHOE-5 cohort only (split_cohort excludes JEONG).
 # JEONG is excluded entirely because (a) it is the barefoot environment holdout and
 # (b) it is the SAME PERSON as SEUNG -> keeping it would leak SEUNG<->JEONG. Dropping
 # JEONG also removes that leak automatically (no same-person twin remains in train).
@@ -112,7 +112,7 @@ def main() -> None:
     keep = [i for i, n in enumerate(feats) if n not in p3.META_FEATURES]
     X = X[:, keep]
     subjects = sorted(set(subj.tolist()))
-    print(f"# Phase 4.5 — calibration (peak-level), shoe-4 cohort {len(y)} samples, {len(labels)} classes")
+    print(f"# Phase 4.5 — calibration (peak-level), shoe-5 cohort {len(y)} samples, {len(labels)} classes")
     print(f"  test subjects: {subjects}  (m = {M_VALUES} calib peaks/action)\n")
 
     preproc, knn_proto = split_preproc_knn(sel=True)
@@ -126,7 +126,7 @@ def main() -> None:
     results = defaultdict(lambda: defaultdict(list))
 
     for test_s in subjects:
-        # Factory train = all OTHER shoe-4 subjects (warm start). JEONG is already
+        # Factory train = all OTHER shoe-5 subjects (warm start). JEONG is already
         # excluded by split_cohort, so no same-person twin remains to leak.
         factory_mask = subj != test_s
         Xf_all, yf_all = X[factory_mask], y[factory_mask]
@@ -191,9 +191,9 @@ def main() -> None:
                 results[test_s][m].append(float(np.mean(rot_f1)))
 
         done = {m: round(float(np.mean(results[test_s][m])), 3) for m in M_VALUES if results[test_s][m]}
-        print(f"  {test_s:8s} (factory = other shoe-4): {done}")
+        print(f"  {test_s:8s} (factory = other shoe-5): {done}")
 
-    # ── Aggregate: shoe-4 mean (JEONG excluded entirely) ─────────────────────────
+    # ── Aggregate: shoe-5 mean (JEONG excluded entirely) ─────────────────────────
     shoe = [s for s in subjects if s not in HOLDOUT_ENV_SUBJECTS]
     curve_shoe, curve_jeong = {}, {}
     for m in M_VALUES:
@@ -204,7 +204,7 @@ def main() -> None:
 
     print("\n## Calibration learning curve (macro-F1)")
     print(f"  {'m (calib peaks/action)':26s} " + "  ".join(f"m={m}" for m in M_VALUES))
-    print(f"  {'shoe-4 mean':26s} " + "  ".join(
+    print(f"  {'shoe-5 mean':26s} " + "  ".join(
         f"{curve_shoe[m]:.3f}" if curve_shoe[m] is not None else " n/a" for m in M_VALUES))
     if any(curve_jeong[m] is not None for m in M_VALUES):
         print(f"  {'JEONG (barefoot)':26s} " + "  ".join(
@@ -217,7 +217,7 @@ def main() -> None:
     #   baseline for the calibration *gain* is m=0 within THIS protocol (same test
     #   set as m>=1), NOT the plain-LOSO number. We report the gain m=0 -> m=k.
     m0 = curve_shoe[0]
-    print(f"\n  m=0 (calib baseline, 2-file test) shoe-4 = {m0:.3f}")
+    print(f"\n  m=0 (calib baseline, 2-file test) shoe-5 = {m0:.3f}")
     print(f"  (plain 3-file LOSO = {LOSO_M0_REFERENCE}; differs because m=0 tests on 2/3 files "
           f"& averages per-fold F1 — same-test-set baseline for calibration gain is m=0, not plain LOSO)")
 
@@ -225,7 +225,7 @@ def main() -> None:
     if gain is not None:
         print(f"  gain m=0 -> m=1 (1 peak/action): +{gain:.3f}  (within-protocol, honest)")
     best_m = max((m for m in M_VALUES if curve_shoe[m] is not None), key=lambda m: curve_shoe[m])
-    print(f"  shoe-4 best: m={best_m} -> {curve_shoe[best_m]:.3f}  (ceiling file-grouped 0.963)")
+    print(f"  shoe-5 best: m={best_m} -> {curve_shoe[best_m]:.3f}  (ceiling file-grouped 0.963)")
 
     # ── Save json + figure ───────────────────────────────────────────────────────
     (OUT_DIR / "calibration.json").write_text(json.dumps({
@@ -240,7 +240,7 @@ def main() -> None:
 
     fig, ax = plt.subplots(figsize=(7, 4.5))
     xs = M_VALUES
-    ax.plot(xs, [curve_shoe[m] for m in xs], "o-", color="#1f4e79", label="shoe-4 mean")
+    ax.plot(xs, [curve_shoe[m] for m in xs], "o-", color="#1f4e79", label="shoe-5 mean")
     if any(curve_jeong[m] is not None for m in xs):
         ax.plot(xs, [curve_jeong[m] for m in xs], "s--", color="#d72638",
                 label="JEONG (barefoot, env. transfer)")

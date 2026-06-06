@@ -85,15 +85,15 @@ def run_curve(make_pipe, X, y, subj, files, labels, subjects, by_sl_file,
     """Return {subject: {m: mean_macro_f1}}. If collect_preds_at is set (an m),
     also return pooled (y_true, y_pred) across folds/positions/rotations at that m.
     pool_subjects (set|None): if given, ONLY these subjects' predictions are pooled
-    into the confusion (e.g. shoe-4 only, to exclude the env-holdout JEONG and keep
-    the confusion comparable to the shoe-4 LOSO). None = all (curve behavior)."""
+    into the confusion (e.g. shoe-5 only, to exclude the env-holdout JEONG and keep
+    the confusion comparable to the shoe-5 LOSO). None = all (curve behavior)."""
     preproc, model_proto = split_preproc_model(make_pipe)
     results = defaultdict(lambda: defaultdict(list))
     pooled_true, pooled_pred = [], []
 
     for test_s in subjects:
         in_pool = (pool_subjects is None) or (test_s in pool_subjects)
-        # Factory train = all OTHER shoe-4 subjects (JEONG already excluded upstream,
+        # Factory train = all OTHER shoe-5 subjects (JEONG already excluded upstream,
         # so no same-person twin remains to leak).
         factory_mask = subj != test_s
         Xf_all, yf_all = X[factory_mask], y[factory_mask]
@@ -205,7 +205,7 @@ def main() -> None:
         st, col = styles[name]
         ax.plot(M_VALUES, [curve[m] for m in M_VALUES], st, color=col, label=name)
     ax.axhline(0.963, ls=":", color="#888", label="file-grouped ceiling 0.963")
-    ax.set_xlabel("calibration peaks per action (m)"); ax.set_ylabel("shoe-4 LOSO macro-F1")
+    ax.set_xlabel("calibration peaks per action (m)"); ax.set_ylabel("shoe-5 LOSO macro-F1")
     ax.set_ylim(0.4, 1.0); ax.set_xticks(M_VALUES)
     ax.set_title("A1: calibration helps across models (not a KNN-only trick)", fontsize=11)
     ax.legend(fontsize=8, loc="lower right"); ax.grid(alpha=0.3)
@@ -213,8 +213,8 @@ def main() -> None:
     (OUT_DIR / "calibration_models.json").write_text(json.dumps(curves, indent=2, ensure_ascii=False))
 
     # ── A2: confusion at m=0 vs m=1 (best model KNN) ─────────────────────────────
-    # All subjects here ARE the shoe-4 cohort (JEONG already excluded), so the
-    # confusion is pooled over the same shoe-4 used everywhere else — no leak.
+    # All subjects here ARE the shoe-5 cohort (JEONG already excluded), so the
+    # confusion is pooled over the same shoe-5 used everywhere else — no leak.
     print(f"\n# A2 — what calibration fixed (confusion m=0 vs m=1, KNN; pooled = {subjects})")
     _, (yt0, yp0) = run_curve(MODEL_FACTORIES["KNN(n=1)+sel"], X, y, subj, files, labels,
                               subjects, by_sl_file, collect_preds_at=0)
