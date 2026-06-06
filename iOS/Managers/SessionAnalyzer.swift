@@ -45,6 +45,11 @@ struct SessionAnalyzer {
             let hi        = peakAbsT + Self.windowPostS
             let window    = samples.filter { $0.timestamp >= lo && $0.timestamp <= hi }
             guard let result = classifier.classifySegment(samples: window) else { continue }
+            // Phase 9 (2) D3: a 'none' result is non-boxing motion (walking, raising
+            // an arm). Drop it from the sequence so it never reaches stats or the
+            // combo timeline. Skipping (not breaking) keeps the rest of the sequence
+            // intact — a 'none' in the middle does not split the combo.
+            if result.label == MotionRuleClassifier.noneLabel { continue }
             items.append(DetectedMotionSequence.Item(
                 label:      result.label,
                 tsMs:       peakRelT * 1000.0,

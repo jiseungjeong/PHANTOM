@@ -54,8 +54,14 @@ BEST_NAME = "KNN(n=1)+sel"
 def best_model():
     return p3.knn(sel=True)
 
-# Ablation model: ExtraTrees, no selection (fixed, so per-device contribution is clean).
+# Ablation model: the DEPLOYED system (KNN + feature-selection), so the chart
+# reflects how the real classifier scales with device count (honest for the
+# report). ExtraTrees(no selection) is kept as an appendix view of "pure
+# per-device contribution" (a fixed model that ignores weak channels on its own).
 def ablation_model():
+    return p3.knn(sel=True)
+
+def ablation_model_extratrees():
     return p3.extratrees(sel=False)
 
 # BoxerSense best (Phase 3.5) for the comparison chart.
@@ -103,8 +109,8 @@ def feature_mask(feats, keep_prefixes):
     return [i for i, n in enumerate(feats) if any(n.startswith(p) for p in keep_prefixes)]
 
 
-def run_ablation(X, y, subj, labels, feats):
-    """LOSO macro-F1 for each device subset with the fixed ExtraTrees model."""
+def run_ablation(X, y, subj, labels, feats, model_factory=ablation_model):
+    """LOSO macro-F1 for each device subset. Default model = deployed KNN+sel."""
     configs = {
         "head (AirPods)": ["a_"],
         "wrist (Watch)": ["w_"],
@@ -117,7 +123,7 @@ def run_ablation(X, y, subj, labels, feats):
     out = {}
     for name, prefixes in configs.items():
         cols = feature_mask(feats, prefixes)
-        lo = loso(ablation_model, X[:, cols], y, subj, labels)
+        lo = loso(model_factory, X[:, cols], y, subj, labels)
         out[name] = {
             "n_features": len(cols),
             "macro_f1": lo["macro_f1"],
@@ -128,7 +134,7 @@ def run_ablation(X, y, subj, labels, feats):
     return out
 
 
-def draw_ablation(ablation, out_png):
+def draw_ablation(ablation, out_png, title="Device ablation (KNN 1-NN + feature-selection, shoe-5 LOSO)"):
     names = list(ablation.keys())
     f1s = [ablation[n]["macro_f1"] for n in names]
     colors = ["#7fb3ff" if "+" not in n and "all" not in n else
@@ -138,7 +144,7 @@ def draw_ablation(ablation, out_png):
     ax.set_xticks(range(len(names)))
     ax.set_xticklabels(names, rotation=30, ha="right", fontsize=9)
     ax.set_ylabel("LOSO macro-F1"); ax.set_ylim(0, max(f1s) * 1.18)
-    ax.set_title("Device ablation (ExtraTrees, no feature-selection, shoe-5 LOSO)", fontsize=11)
+    ax.set_title(title, fontsize=11)
     for b, v in zip(bars, f1s):
         ax.text(b.get_x() + b.get_width() / 2, v + 0.01, f"{v:.3f}", ha="center", fontsize=8)
     fig.tight_layout()
@@ -252,11 +258,19 @@ def main() -> None:
     for k, v in lr_loso.items():
         print(f"    {k:28s} swap {v['swapped']}/{v['of_total']} = {v['swap_rate']*100:.1f}%")
 
-    # ── P2: device ablation (ExtraTrees, no selection) ───────────────────────────
-    print("\n## P2 — device ablation (ExtraTrees, no selection)")
-    ablation = run_ablation(Xk, y, subj, labels, feats_keep)
+    # ── P2: device ablation ──────────────────────────────────────────────────────
+    # MAIN = deployed system (KNN + feature-selection): honest for the report, and
+    # 'all 3 IMU' stays the best. ExtraTrees(no-sel) kept as an appendix view.
+    print("\n## P2 — device ablation (KNN + feature-selection, DEPLOYED system)")
+    ablation = run_ablation(Xk, y, subj, labels, feats_keep, model_factory=ablation_model)
     draw_ablation(ablation, OUT_DIR / "ablation.png")
     (OUT_DIR / "ablation.json").write_text(json.dumps(ablation, indent=2, ensure_ascii=False))
+
+    print("\n## P2 (appendix) — device ablation (ExtraTrees, no selection — pure per-device)")
+    ablation_et = run_ablation(Xk, y, subj, labels, feats_keep, model_factory=ablation_model_extratrees)
+    draw_ablation(ablation_et, OUT_DIR / "ablation_extratrees.png",
+                  title="Device ablation (ExtraTrees, no feature-selection, shoe-5 LOSO) — appendix")
+    (OUT_DIR / "ablation_extratrees.json").write_text(json.dumps(ablation_et, indent=2, ensure_ascii=False))
 
     # ── Comparison chart: ours vs BoxerSense ─────────────────────────────────────
     draw_ours_vs_boxersense(OUT_DIR / "ours_vs_boxersense.png")

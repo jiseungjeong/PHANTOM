@@ -98,11 +98,31 @@ final class MotionRuleClassifier {
         "Left Slip", "Right Slip", "Left Roll", "Right Roll",
     ]
 
+    /// Phase 9 (2): label for user-calibrated NON-boxing motion (walking, raising
+    /// an arm). High-energy enough to pass the idle gate, so it would otherwise be
+    /// forced into a boxing class. A classify() result of this label means "no
+    /// boxing action" — the caller drops it from stats and the combo sequence.
+    static let noneLabel = "none"
+
+    /// Phase 9 (2) D3 margin rule. The nearest 'none' reference must be at least
+    /// this much closer than the nearest boxing reference to win; otherwise the
+    /// boxing label is kept. Protects boxing recall against an ambiguous 'none'.
+    /// (nearestBoxing > nearestNone * marginRatio  =>  classify as none)
+    static let noneMarginRatio: Double = 1.15
+
     /// Ordered action list for the calibration flow (one demo per action, in order).
     static let calibrationOrder: [String] = [
         "Lead Jab", "Lead Hook", "Lead Uppercut",
         "Rear Jab", "Rear Hook", "Rear Uppercut",
         "Left Slip", "Right Slip", "Left Roll", "Right Roll",
+    ]
+
+    /// Phase 9 (2): non-boxing motions the user demonstrates so they are rejected
+    /// during a session (NOT idle/standing — that is handled by the idle gate; D1).
+    /// Each demo is captured like a normal calibration but committed under the
+    /// shared `noneLabel`, so several demos enrich one 'none' class.
+    static let noneCalibrationActions: [String] = [
+        "Walking", "Raise Left Arm", "Raise Right Arm",
     ]
 
     /// Classify a recording from the beginning. Returns nil when data is too short.
@@ -170,16 +190,56 @@ final class MotionRuleClassifier {
 
     private func predictKNN(features: [String: Double]) -> (label: String, confidence: Double) {
         let x = transform(features: features)
-        // 1-NN Manhattan distance over the (possibly calibrated) reference set
+        // 1-NN Manhattan distance over the (possibly calibrated) reference set.
+        // Track the nearest neighbour overall AND, separately, the nearest 'none'
+        // and nearest boxing neighbour so the D3 margin rule can decide between
+        // them (Phase 9 (2)).
         var bestDist = Double.infinity
         var bestLabel = ""
+        var nearestNone = Double.infinity
+        var nearestBoxing = Double.infinity
         for (vec, label) in zip(trainVectors, trainLabels) {
             var dist = 0.0
             for i in 0..<x.count { dist += abs(x[i] - vec[i]) }
             if dist < bestDist { bestDist = dist; bestLabel = label }
+            if label == Self.noneLabel {
+                if dist < nearestNone { nearestNone = dist }
+            } else if dist < nearestBoxing {
+                nearestBoxing = dist
+            }
+        }
+
+        // D3 margin rule: only accept 'none' when it is clearly closer than the
+        // best boxing match (>= marginRatio). Otherwise keep boxing. With no 'none'
+        // in the reference (not calibrated yet) nearestNone stays +inf -> boxing.
+        let isNone = nearestNone < nearestBoxing
+            && nearestBoxing > nearestNone * Self.noneMarginRatio
+        if isNone {
+            let conf = nearestNone < 1e-9 ? 1.0 : 1.0 / (1.0 + nearestNone)
+            return (Self.noneLabel, conf)
+        }
+        // Boxing wins. If the raw 1-NN was a 'none' that lost the margin test,
+        // fall back to the nearest boxing label/distance for the reported result.
+        if bestLabel == Self.noneLabel {
+            let conf = nearestBoxing.isFinite
+                ? (nearestBoxing < 1e-9 ? 1.0 : 1.0 / (1.0 + nearestBoxing)) : 0.0
+            return (nearestBoxingLabel(x: x), conf)
         }
         let confidence = bestDist < 1e-9 ? 1.0 : 1.0 / (1.0 + bestDist)
         return (bestLabel, confidence)
+    }
+
+    /// The label of the nearest non-'none' (boxing) reference vector. Used by the
+    /// margin rule when the raw 1-NN was 'none' but boxing is kept.
+    private func nearestBoxingLabel(x: [Double]) -> String {
+        var bestDist = Double.infinity
+        var bestLabel = ""
+        for (vec, label) in zip(trainVectors, trainLabels) where label != Self.noneLabel {
+            var dist = 0.0
+            for i in 0..<x.count { dist += abs(x[i] - vec[i]) }
+            if dist < bestDist { bestDist = dist; bestLabel = label }
+        }
+        return bestLabel
     }
 
     // MARK: - On-Device Calibration (Phase 5 d)

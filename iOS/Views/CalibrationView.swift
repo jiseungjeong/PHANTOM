@@ -270,7 +270,8 @@ struct CalibrationView: View {
 // shaded band for the cropped window [windowStartS, windowEndS]. Lets the user see
 // where the peak landed and exactly which span was cut before committing.
 
-private struct PeakPreviewGraph: View {
+// Shared with NoneCalibrationView (Phase 9 (2)) — not file-private.
+struct PeakPreviewGraph: View {
     let preview: SessionAnalyzer.SegmentPreview
 
     var body: some View {

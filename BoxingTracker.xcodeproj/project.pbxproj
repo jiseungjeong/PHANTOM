@@ -31,6 +31,8 @@
 		805217C82FD01910001536FE /* knn_params.json in Resources */ = {isa = PBXBuildFile; fileRef = 805217C72FD01910001536FE /* knn_params.json */; };
 		CB0000010000000000000001 /* knn_params_combo.json in Resources */ = {isa = PBXBuildFile; fileRef = CB0000020000000000000002 /* knn_params_combo.json */; };
 		805217CA2FD2A2FA001536FE /* CalibrationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 805217C92FD2A2FA001536FE /* CalibrationView.swift */; };
+		805217CB2FD2A2FA001536FE /* NoneCalibrationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 805217CC2FD2A2FA001536FE /* NoneCalibrationView.swift */; };
+		805217CD2FD2A2FA001536FE /* NoneMotionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 805217CE2FD2A2FA001536FE /* NoneMotionStore.swift */; };
 		8BD503430C7960732849815D /* ConnectionBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = A981092844965F0C0AE9F893 /* ConnectionBar.swift */; };
 		8F17201552746848FDCE6831 /* SessionToggleButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2305E24AB6D3993BC6E9C433 /* SessionToggleButton.swift */; };
 		96CBD62DB8B045C25A7D51D9 /* PHANTOMFusionEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12F37F8E6816F11D5FC40D51 /* PHANTOMFusionEngine.swift */; };
@@ -114,6 +116,8 @@
 		805217C72FD01910001536FE /* knn_params.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = knn_params.json; sourceTree = "<group>"; };
 		CB0000020000000000000002 /* knn_params_combo.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = knn_params_combo.json; sourceTree = "<group>"; };
 		805217C92FD2A2FA001536FE /* CalibrationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalibrationView.swift; sourceTree = "<group>"; };
+		805217CC2FD2A2FA001536FE /* NoneCalibrationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoneCalibrationView.swift; sourceTree = "<group>"; };
+		805217CE2FD2A2FA001536FE /* NoneMotionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoneMotionStore.swift; sourceTree = "<group>"; };
 		86D052C8B42C88359C2E12BF /* WorkoutHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutHistory.swift; sourceTree = "<group>"; };
 		924F8D6885D5E3DA9078EFA2 /* DataCollectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataCollectView.swift; sourceTree = "<group>"; };
 		95847D388B4A62A3C54D35E8 /* SessionStartConfirmOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStartConfirmOverlay.swift; sourceTree = "<group>"; };
@@ -167,6 +171,8 @@
 			isa = PBXGroup;
 			children = (
 				805217C92FD2A2FA001536FE /* CalibrationView.swift */,
+				805217CC2FD2A2FA001536FE /* NoneCalibrationView.swift */,
+				805217CE2FD2A2FA001536FE /* NoneMotionStore.swift */,
 				09C42C383DA0C7827A48509F /* HistoryView.swift */,
 				0CD992594DCD227730CF0B1E /* SessionView.swift */,
 				5A90391C7A2F44D883C5BCA1 /* StatsView.swift */,
@@ -422,6 +428,8 @@
 				50AE032713CD393BB744C905 /* SessionStartConfirmOverlay.swift in Sources */,
 				8F17201552746848FDCE6831 /* SessionToggleButton.swift in Sources */,
 				805217CA2FD2A2FA001536FE /* CalibrationView.swift in Sources */,
+				805217CB2FD2A2FA001536FE /* NoneCalibrationView.swift in Sources */,
+				805217CD2FD2A2FA001536FE /* NoneMotionStore.swift in Sources */,
 				CA49BC51FC4D52A587844EEB /* SessionView.swift in Sources */,
 				0F3108973F60356603532529 /* SpikeDetector.swift in Sources */,
 				6A7CC8CFF0F7EE130F3694A8 /* StatsView.swift in Sources */,
