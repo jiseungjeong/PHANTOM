@@ -2,11 +2,12 @@
   "model": "KNN(n=1, weights=distance, metric=manhattan), FULL (no feature-selection)",
   "cohort": [
     "JIHO",
+    "JO",
     "JUHO",
     "SEUNG",
     "SHIM"
   ],
-  "n_train_samples": 598,
+  "n_train_samples": 748,
   "n_classes": 10,
   "labels": [
     "Lead Hook",

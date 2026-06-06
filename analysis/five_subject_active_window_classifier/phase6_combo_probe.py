@@ -47,7 +47,7 @@ sys.path.insert(0, str(THIS.parent))
 import phase1_segment as p1
 import dtw_probe as dtwp              # reuse _window_series, dtw_dist, collect_windows, RESAMPLE_N
 
-SHOE = ["seung", "jiho", "juho", "shim"]
+SHOE = ["seung", "jiho", "juho", "shim", "jo"]   # shoe cohort (JEONG=barefoot holdout excluded)
 DEFENSE = {"Left Slip", "Right Slip", "Left Roll", "Right Roll"}
 # ④ amplitude prior: strikes hit ~2.8x harder than defenses (single-action probe:
 # strike peak-height median 6.13 vs defense 2.19). So a strike label should prefer

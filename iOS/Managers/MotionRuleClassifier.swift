@@ -88,6 +88,10 @@ final class MotionRuleClassifier {
 
     // MARK: - Public Classification
 
+    /// Below this gyro-magnitude (max across sensors), the window is treated as
+    /// "no action" (idle) rather than forced into a boxing class. See Phase 9.
+    static let idleGmThreshold: Double = 6.0
+
     static let singleMotionLabels: Set<String> = [
         "Lead Jab", "Lead Hook", "Lead Uppercut",
         "Rear Jab", "Rear Hook", "Rear Uppercut",
@@ -128,6 +132,14 @@ final class MotionRuleClassifier {
         }
         let hasSegment = Self.sources.contains { (features["\(prefix($0))_n"] ?? 0) >= 5 }
         guard hasSegment else { return nil }
+
+        // ★ Phase 9 (1) idle reject: a still/low-motion window must not be forced into
+        // a boxing class (1-NN always answers something). Gate on gm_max = the max
+        // gyro-magnitude across sensors (same value python uses). Diagnosis: idle
+        // gm_max median 3.7 vs defense min 6.3 -> T=6 drops 85% of idle while keeping
+        // 100% of defenses. (Non-boxing motion above T is handled by the 'none' class.)
+        let gmMax = Self.sources.map { features["\(prefix($0))_gm_max"] ?? 0 }.max() ?? 0
+        guard gmMax >= Self.idleGmThreshold else { return nil }   // too still -> no action
 
         let signature = sourceSignature(features)
         let (label, confidence) = predictKNN(features: features)
