@@ -29,6 +29,7 @@
 		7D04AE1EAFAB532421E970FE /* PhoneMotionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E411ACE81A03C4EC4A0B0C6 /* PhoneMotionManager.swift */; };
 		805217C62FD01780001536FE /* SessionAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 805217C52FD01780001536FE /* SessionAnalyzer.swift */; };
 		805217C82FD01910001536FE /* knn_params.json in Resources */ = {isa = PBXBuildFile; fileRef = 805217C72FD01910001536FE /* knn_params.json */; };
+		805217D02FD2A2FA001536FE /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 805217D12FD2A2FA001536FE /* Assets.xcassets */; };
 		CB0000010000000000000001 /* knn_params_combo.json in Resources */ = {isa = PBXBuildFile; fileRef = CB0000020000000000000002 /* knn_params_combo.json */; };
 		805217CA2FD2A2FA001536FE /* CalibrationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 805217C92FD2A2FA001536FE /* CalibrationView.swift */; };
 		805217CB2FD2A2FA001536FE /* NoneCalibrationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 805217CC2FD2A2FA001536FE /* NoneCalibrationView.swift */; };
@@ -114,6 +115,7 @@
 		7CA5C5984787C4F567D8E16B /* FileUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileUtils.swift; sourceTree = "<group>"; };
 		805217C52FD01780001536FE /* SessionAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionAnalyzer.swift; sourceTree = "<group>"; };
 		805217C72FD01910001536FE /* knn_params.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = knn_params.json; sourceTree = "<group>"; };
+		805217D12FD2A2FA001536FE /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		CB0000020000000000000002 /* knn_params_combo.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = knn_params_combo.json; sourceTree = "<group>"; };
 		805217C92FD2A2FA001536FE /* CalibrationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalibrationView.swift; sourceTree = "<group>"; };
 		805217CC2FD2A2FA001536FE /* NoneCalibrationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoneCalibrationView.swift; sourceTree = "<group>"; };
@@ -211,6 +213,7 @@
 			children = (
 				CB40E634B0A1FBDECB06691A /* BoxingTracker.entitlements */,
 				6A24CA97C016BF82B59279C7 /* Info.plist */,
+				805217D12FD2A2FA001536FE /* Assets.xcassets */,
 				FDA5DFE2A3F6B8658D15CE55 /* App */,
 				C0BAC473959A8FB661F24C55 /* DataCollect */,
 				7222AAC12E78D8AAC4372011 /* Managers */,
@@ -372,6 +375,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				805217D02FD2A2FA001536FE /* Assets.xcassets in Resources */,
 				A1B2C3D4E5F600112233AA02 /* single_action_tree.json in Resources */,
 				805217C82FD01910001536FE /* knn_params.json in Resources */,
 				CB0000010000000000000001 /* knn_params_combo.json in Resources */,

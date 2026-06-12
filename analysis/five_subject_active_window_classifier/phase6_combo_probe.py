@@ -1035,7 +1035,7 @@ def run_labelset():
     print("# done.")
 
 
-def run_anchor():
+def run_anchor(anon=False):
     """⑪ anchor-first 2-stage segmentation (plan §2.2). Instead of matching every
     label to every peak at once (the combined-DP that z-score C2 keeps fooling),
     exploit that the combo LABEL is known and strikes are loud & sensor-specific:
@@ -1050,7 +1050,9 @@ def run_anchor():
         (probe_defpos: 0). Narrowing the search to one interval removes the C2
         ambiguity that the global DP suffered.
 
-    Window placement/visualization mirror run_spot. Writes combo_anchor_all_p*.png."""
+    Window placement/visualization mirror run_spot. Writes combo_anchor_all_p*.png
+    (or combo_anchor_anon_p*.png when anon=True: subjects -> p1..pN, no action names)."""
+    ANON = anon
     print("# Phase 6 — anchor-first 2-stage (strikes->sensor peaks, then defenses)\n")
     templates = load_single_templates()
     print(f"  templates: {sum(len(v) for v in templates.values())} single windows")
@@ -1196,6 +1198,10 @@ def run_anchor():
         k = (r[0], r[1]); cnt[k] = cnt.get(k, 0) + 1; rep_list.append(cnt[k])
     cols = ["#7fb3ff", "#84d68a", "#ffd166", "#c792ea"]
     sensors = [("Watch", "#1b9e77"), ("iPhone", "#d95f02"), ("AirPods", "#7570b3")]
+
+    # anonymized subject map: sorted real names -> p1..pN (no names, no action text)
+    subj_anon = {s: f"p{i+1}" for i, s in enumerate(sorted({r[0] for r in items}))}
+
     ncol = 4; PAGE_ROWS = 6; per_page = ncol * PAGE_ROWS
     n_pages = (len(items) + per_page - 1) // per_page
     saved = []
@@ -1221,15 +1227,22 @@ def run_anchor():
                         rotation=90, va="top", ha="center", color="#222")
             ntot = tot[(subj, label)]
             suf = f"  #{chunk_rep[k]}/{ntot}" if ntot > 1 else ""
-            ax.set_title(f"{subj} | {label}{suf}", fontsize=7)
+            # subject anonymized (p1..pN); action labels KEPT
+            disp_subj = subj_anon[subj] if ANON else subj
+            ax.set_title(f"{disp_subj} | {label}{suf}", fontsize=7)
             ax.set_xticks([]); ax.set_yticks([])
         for k in range(len(chunk), nrow * ncol):
             axes[k // ncol][k % ncol].axis("off")
-        fig.suptitle(f"Phase 6 ANCHOR-FIRST — page {pg+1}/{n_pages} "
-                     "(strike=sensor peak, defense=AirPods in interval; lines=Watch/iPhone/AirPods)",
-                     fontsize=9, y=0.998)
+        title = ("Combination segmentation across 5 subjects (anonymized) — "
+                 "strike on its sensor peak, defense on a head peak in between; "
+                 "shaded = placed windows" if ANON else
+                 "Phase 6 ANCHOR-FIRST — page %d/%d "
+                 "(strike=sensor peak, defense=AirPods in interval; lines=Watch/iPhone/AirPods)"
+                 % (pg + 1, n_pages))
+        fig.suptitle(title, fontsize=9, y=0.998)
         fig.tight_layout(rect=[0, 0, 1, 0.99])
-        out = OUT_DIR / f"combo_anchor_all_p{pg+1}.png"
+        stem = "combo_anchor_anon_p" if ANON else "combo_anchor_all_p"
+        out = OUT_DIR / f"{stem}{pg+1}.png"
         fig.savefig(out, dpi=110); plt.close(fig)
         saved.append(out.name)
     print(f"  saved {len(items)} combos / {n_pages} pages -> {', '.join(saved)}")
@@ -1240,6 +1253,8 @@ def main() -> None:
     import sys as _sys
     if "--labelset" in _sys.argv:
         run_labelset(); return
+    if "--anchor-anon" in _sys.argv:
+        run_anchor(anon=True); return
     if "--anchor" in _sys.argv:
         run_anchor(); return
     if "--spot-diag" in _sys.argv:

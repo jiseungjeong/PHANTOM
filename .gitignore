@@ -80,6 +80,13 @@ analysis/**/__pycache__/
 # Reference papers / docs dumped at repo root
 *.pdf
 
+# Large generated media at repo root (demo recordings / GIFs — regenerable, too big for git)
+*.gif
+*.mov
+*.mp4
+# Logo source at root is redundant (the app icon lives in iOS/Assets.xcassets/AppIcon)
+/app-logo.png
+
 # IDE / editor
 .idea/
 .vscode/
