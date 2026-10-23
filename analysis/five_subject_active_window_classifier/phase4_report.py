@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Phase 4 — Metric & report (for the presentation).
 
-Implements plan.md §7 / todolist Phase 4, per the P1/P2 decisions (2026-06-04):
+Per the P1/P2 decisions:
   P1 — confusion matrix on BOTH LOSO and file-grouped, drawn with the best model
        (KNN + feature-selection from Phase 3). LOSO = unseen person (~0.60),
        file-grouped = known person (~0.97); shown side by side so the message

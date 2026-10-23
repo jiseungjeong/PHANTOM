@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Phase 0 — data inspection (read-only).
 
-Measures the Phase 0 items in plan.md / todolist.md. No model training, no edits
+Inspects the raw recordings before modelling. No model training, no edits
 to existing files.
 Inspection items:
   - inventory: file counts per subject/label (single vs combo separated)
@@ -28,7 +28,7 @@ import numpy as np
 THIS = Path(__file__).resolve()
 REPO = THIS.parents[2]                       # .../PHANTOM
 DATA_DIR = REPO / "Data"
-LEGACY = REPO / "analysis" / "jiho_juho_shim_active_window_classifier_minimal"
+LEGACY = REPO / "analysis" / "common"
 
 sys.path.insert(0, str(LEGACY))
 import rule_base_classifier as rbc            # standalone import OK

@@ -173,7 +173,7 @@ def draw_confusion(cm, labels, title, ax, show_ylabels=True):
     if show_ylabels:
         ax.set_yticklabels(labels, fontsize=6); ax.set_ylabel("True")
     else:
-        ax.set_yticklabels([])   # 오른쪽 행렬은 y라벨 생략(왼쪽과 동일, 겹침 방지)
+        ax.set_yticklabels([])   # right matrix omits y labels (same as left; avoids overlap)
     ax.set_xlabel("Predicted"); ax.set_title(title, fontsize=10)
     for i in range(n):
         for j in range(n):
@@ -237,13 +237,13 @@ def main() -> None:
         print(f"    {a} <-> {b}: m0 {s0*100:.1f}% -> m1 {s1*100:.1f}%")
 
     fig, axes = plt.subplots(1, 2, figsize=(14, 6))
-    fig.subplots_adjust(wspace=0.30, right=0.88)   # 두 행렬 간격 + 오른쪽 colorbar 공간
+    fig.subplots_adjust(wspace=0.30, right=0.88)   # gap between matrices + room for colorbar on the right
     draw_confusion(cm0, labels, f"m=0 (no calibration)  macro-F1={f1_0:.3f}", axes[0], show_ylabels=True)
     im = draw_confusion(cm1, labels, f"m=1 (1 demo/action)  macro-F1={f1_1:.3f}", axes[1], show_ylabels=False)
-    cax = fig.add_axes([0.90, 0.15, 0.015, 0.7])   # colorbar 전용 축(맨 오른쪽 고정) → wspace 안 먹힘
+    cax = fig.add_axes([0.90, 0.15, 0.015, 0.7])   # dedicated colorbar axis (pinned far right), unaffected by wspace
     fig.colorbar(im, cax=cax)
     fig.suptitle("A2: calibration confusion — Left<->Right Slip confusion resolved", fontsize=12)
-    fig.savefig(FIG_DIR / "calibration_confusion.png", dpi=130); plt.close(fig)   # bbox_inches 빼서 add_axes/wspace 의도대로 유지
+    fig.savefig(FIG_DIR / "calibration_confusion.png", dpi=130); plt.close(fig)   # no bbox_inches so add_axes/wspace layout is kept as intended
     (OUT_DIR / "calibration_confusion.json").write_text(json.dumps({
         "labels": labels, "macro_f1_m0": f1_0, "macro_f1_m1": f1_1,
         "left_right_swap": swaps, "confusion_m0": cm0.tolist(), "confusion_m1": cm1.tolist(),

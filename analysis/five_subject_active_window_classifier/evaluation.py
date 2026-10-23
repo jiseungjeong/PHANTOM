@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Phase 2 — evaluation protocol (reusable evaluation engine).
 
-Implements plan.md §6 / todolist Phase 2. Model-agnostic: Phase 3 plugs multiple
+Model-agnostic: Phase 3 plugs multiple
 models into this engine for fair comparison.
 
 Provided protocols:

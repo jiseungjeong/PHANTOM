@@ -13,8 +13,9 @@ PHANTOM/
 │   ├── App/                # Entry point (BoxingTrackerApp, ContentView)
 │   ├── Managers/           # Business logic / sensor wrappers
 │   ├── Models/             # Codable persistence models
-│   ├── Views/              # SwiftUI screens
+│   ├── Views/              # SwiftUI screens (session, calibration, history, stats)
 │   │   └── Session/        # Sub-components of the session screen
+│   ├── Resources/          # Bundled KNN references (knn_params*.json)
 │   └── DataCollect/        # ML dataset collection (separate tab, not core)
 ├── Watch/                  # Apple Watch app target
 │   ├── WatchBoxingApp.swift
@@ -126,6 +127,21 @@ Used on both Watch and iPhone. Triggers when magnitude exceeds 1.2g, collects ra
 
 ### `HeadGestureClassifier` (`Shared/`)
 Phase 1 heuristic: gyroY threshold (1.5 rad/s) for anomaly detection, then classifies slip/roll/pullBack from gyroY direction and accX magnitude. 25-sample cooldown prevents double-firing.
+
+### `SessionAnalyzer` + `MotionRuleClassifier` (`iOS/Managers/`)
+Post-session action recognition. All raw IMU samples from the three devices are buffered
+during a session; on stop, `SessionAnalyzer` builds a fused motion envelope (40 ms bins,
+62% gyro + 38% dynamic acceleration, 5-bin smoothing), finds peaks at least 0.5 s apart and
+cuts a -0.5 s / +0.8 s window around each one. `MotionRuleClassifier` turns each window into
+the same feature vector as the Python pipeline (`analysis/common/`), applies the frozen
+preprocessing (impute -> variance filter -> RobustScaler -> L2) and returns the label of the
+nearest reference vector (1-NN, Manhattan distance). Windows that are too still are dropped,
+and windows closer to the user's `none` demos are rejected.
+
+Two reference sets ship in `iOS/Resources/`: `knn_params.json` (single actions) and
+`knn_params_combo.json` (single actions plus selected combo windows, for fast transitions).
+On-device calibration appends the user's labeled demo vectors to both and persists them to
+`calibration.json` in Documents.
 
 ### `BoxingSessionManager` (`iOS/Managers/`)
 SwiftUI ViewModel. Wires the three sensor managers to `PHANTOMFusionEngine`. Handles session start/stop from both iPhone UI and Watch UI (Watch-initiated sessions use Watch's anchorTs for clock alignment).
