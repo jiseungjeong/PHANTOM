@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Phase 1 — single-action segmentation + feature extraction.
 
-Implements plan.md §2/§4, todolist Phase 1.
 - Single-action files only (no hyphen). 5 subjects x 30 = 150 files.
 - Sync-jump detection -> 5 active peak windows -> 1 window = 1 sample (non-overlap).
 - Extract motion_all features (~490). Feature names match the existing
@@ -31,7 +30,7 @@ THIS = Path(__file__).resolve()
 REPO = THIS.parents[2]
 DATA_DIR = REPO / "Data"
 OUT_DIR = THIS.parent
-LEGACY = REPO / "analysis" / "jiho_juho_shim_active_window_classifier_minimal"
+LEGACY = REPO / "analysis" / "common"
 
 sys.path.insert(0, str(LEGACY))
 import rule_base_classifier as rbc
@@ -170,7 +169,7 @@ def subject_from_path(path: Path) -> str:
 # Slip mirrored. Swapping {SEUNG,JO,JUHO}'s Left<->Right Slip cut the L/R-Slip
 # confusion ~33%->~5% and raised LOSO macro-F1 0.599->0.659 (probe_swap2). Applied
 # at label-parse time so BOTH single and combo (sequence tokens) are corrected, with
-# the raw files untouched. (See plan §9.7.)
+# the raw files untouched.
 SLIP_SWAP_SUBJECTS = {"SEUNG", "JO", "JUHO"}
 
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""DTW probe (stage 1) — does DTW beat our KNN on DEFENSE actions? (plan §9.9)
+"""DTW probe (stage 1) — does DTW beat our KNN on DEFENSE actions?
 
 Light, fair check inspired by Thomas et al. (UbiComp'24, earable boxing defense,
 DTW+DBA). Question: on the SAME shoe-5 LOSO, same 4 defense classes, does 1-NN DTW
@@ -33,7 +33,7 @@ from sklearn.metrics import f1_score
 THIS = Path(__file__).resolve()
 REPO = THIS.parents[2]
 DATA_DIR = REPO / "Data"
-LEGACY = REPO / "analysis" / "jiho_juho_shim_active_window_classifier_minimal"
+LEGACY = REPO / "analysis" / "common"
 sys.path.insert(0, str(LEGACY))
 import rule_base_classifier as rbc
 sys.modules["analysis"] = types.ModuleType("analysis")
@@ -354,7 +354,7 @@ def run_timing(classes=None):
 
 
 def run_dtw_calib(classes=None):
-    """DTW + calibration (plan §9.9, O1-O4): defense, 1-NN(18ch), m=0->2.
+    """DTW + calibration: defense, 1-NN(18ch), m=0->2.
     File-separated protocol like phase45: test subject's 3 files per action split
     into 1 calibration file vs 2 test files; calibration windows (m peaks) are
     APPENDED to the factory DTW reference (other subjects). Double-averaged over

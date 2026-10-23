@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Phase 4.5 — Calibration (on-device personalization) experiment.
 
-Implements plan.md §9.8. Question: can a small amount of the END USER's own data
+Question: can a small amount of the END USER's own data
 ("calibration") lift LOSO 0.605 (unseen person) toward the file-grouped ceiling
 0.963 (known person)? If yes with little user effort, on-device personalization
 beats collecting more subjects.

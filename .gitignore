@@ -36,7 +36,7 @@ Package.resolved
 # CocoaPods (not used, but safe)
 Pods/
 
-# Python (for analyze_airpods.py etc.)
+# Python (analysis scripts)
 __pycache__/
 *.pyc
 *.pyo
@@ -47,7 +47,7 @@ venv/
 # PHANTOM app-generated runtime files (when pulled from device)
 *.tmp.csv
 
-# Raw IMU capture datasets (large, not source — jiseung_data alone is ~1 GB)
+# Raw IMU capture datasets (large, not source)
 jiho_data/
 jiseung_data/
 juho_data/
@@ -57,9 +57,9 @@ Data/
 _unused_external/
 
 # Offline analysis workspace.
-# Track source & docs (scripts, plan/todolist, README, requirements), but ignore
+# Track source & docs (scripts, README, requirements), but ignore
 # regenerable heavy artifacts (datasets, trained models, reports, caches).
-# The deployed model is bundled separately at iOS/Resources/single_action_tree.json.
+# The deployed KNN references are bundled separately at iOS/Resources/knn_params*.json.
 analysis/**/*.json
 analysis/**/*.joblib
 analysis/**/*.csv

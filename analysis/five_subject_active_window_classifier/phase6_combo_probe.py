@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Phase 6 — combo segmentation diagnosis (T1 hit-rate + T2 visualization).
 
-plan §2.1. Goal: BEFORE building combo labeling, find out whether our peak
+Goal: BEFORE building combo labeling, find out whether our peak
 detector actually finds "one peak per combo action" at the right positions.
 
 Why not reuse choose_real_peaks: it enforces MIN_REPS=4 (single = 5 reps), so
@@ -108,7 +108,7 @@ def per_source_envelopes(data):
     return out
 
 
-# base_jump thresholds (plan §2.2, final design). base_jump (extract_features'
+# base_jump thresholds (final design). base_jump (extract_features'
 # jump_cut_s) is NOT a cut position — it sits ~2.67s in (after a real action), so
 # cutting there eats the action. It is only a FLAG for "a jump exists".
 JUMP_SURE_S = 1.5     # base_jump above this -> jump is certain, force a cut
@@ -124,11 +124,11 @@ def _rising_edge_start(env, peak_idx):
 
 
 def _combo_jump_cut_base(data, base_jump):
-    """Combo-safe jump cut (plan §2.2, final design — base_jump as FLAG + valley).
+    """Combo-safe jump cut (final design — base_jump as FLAG + valley).
 
     History: v1 cut at the first peak's rising edge and ate the first real action
-    ('점프컷이 너무 많이 먹는다'). v2 added safety rails but left 51/120 real jumps
-    un-cut ('점프한 건 확실한데 안 잘림') — because the rails ignored base_jump,
+    ('the jump cut eats too much'). v2 added safety rails but left 51/120 real jumps
+    un-cut ('clearly jumped, but not cut') — because the rails ignored base_jump,
     which median 2.67s vs first-peak 0.68s clearly signals a jump is present.
 
     Final rule: base_jump is a FLAG, never a cut position (it lands ~2.67s in,
@@ -194,11 +194,11 @@ def combo_jump_cut(data, base_jump):
     dominant and can sit near base_jump, so neither the AirPods ratio nor the
     base_jump position guard separates it from a jump residue). Protecting real
     actions (plan ①: 'eat 0') outweighs fixing the ~JUHO double-bump residue, so
-    we keep the base cut. Double-bump residue is accepted (plan §2.2 / C2)."""
+    we keep the base cut. Double-bump residue is accepted."""
     return _combo_jump_cut_base(data, base_jump)
 
 
-# ⑫a jump-window END from the front AirPods peak group (plan §2.2). A jump bobs the
+# ⑫a jump-window END from the front AirPods peak group. A jump bobs the
 # head, so it shows as a CLUSTER of AirPods peaks at the very START of the signal.
 # The user's mis-segs (jump read as Left/Right Roll) all stem from that cluster
 # surviving the base cut. Height can't separate jump from a real defense (probe:
@@ -485,7 +485,7 @@ def run_jumpcut_all():
 
 
 def run_spot():
-    """Pattern spotting (plan §2.2): NO peak detection, NO jump cut. Slide a window
+    """Pattern spotting: NO peak detection, NO jump cut. Slide a window
     over the FULL combo signal; at each position, DTW-match against each action's
     single-action template. DP assigns the N actions to N non-overlapping, time-
     ordered positions minimizing total DTW. Jump auto-ignored (doesn't match any
@@ -507,7 +507,7 @@ def run_spot():
         t_full, env_full, dur, _ = bp.motion_envelope(data, 0.0)
         if len(env_full) == 0 or dur < WIN_S:
             total += 1; continue
-        # ① combo-safe jump cut (plan §2.1) — diagnosis (--spot-diag) showed the jump
+        # ① combo-safe jump cut — diagnosis (--spot-diag) showed the jump
         # residue is picked as the FIRST action in 75% of combos. Pull the cut back to
         # the first real action's rising edge, then DROP candidate peaks before it.
         cut = combo_jump_cut(data, jump)
@@ -567,7 +567,7 @@ def run_spot():
         if len(starts) < n:
             total += 1; continue
         cand = [dtwp._window_series(data, s, s + WIN_S, "all18", 0.0) for s in starts]
-        # ②④⑥ LABEL-CONDITIONAL multiplicative energy term (plan §2.2). The energy a
+        # ②④⑥ LABEL-CONDITIONAL multiplicative energy term. The energy a
         # label sees comes from ITS dominant sensor (⑥): a strike on its own sensor
         # reads big, a defense on the head sensor reads its true height. e_norm is
         # normalized WITHIN that sensor (⑥ trap-3: never compare sensors' raw values).
@@ -746,7 +746,7 @@ def run_spot():
 
 
 def run_spot_diag():
-    """Diagnostic for pattern spotting (plan §2.2, before the integrated fix).
+    """Diagnostic for pattern spotting (before the integrated fix).
     Same candidate/cost/DP logic as run_spot, but instruments WHY bands miss:
       - overlays ALL candidate peak positions (gray ticks) vs DP-chosen (colored bands)
       - marks the base jump-cut time (vertical dashed) and the jump region
@@ -998,7 +998,7 @@ def run_labelset():
     feature-ize each window with bsr.features_for_window (the SINGLE-action format, so
     it is KNN-compatible), and save combo_windows.npz (X, y, subject, file). This is
     the data product that Phase 7 (a)/(b) consume to test/strengthen the classifier on
-    fast action transitions (plan §C2 purpose chain)."""
+    fast action transitions."""
     print("# Phase 7 — combo label set (anchor windows -> single-format features)\n")
     rows = collect()
     X, y, subjects, files, conf = [], [], [], [], []
@@ -1036,7 +1036,7 @@ def run_labelset():
 
 
 def run_anchor(anon=False):
-    """⑪ anchor-first 2-stage segmentation (plan §2.2). Instead of matching every
+    """⑪ anchor-first 2-stage segmentation. Instead of matching every
     label to every peak at once (the combined-DP that z-score C2 keeps fooling),
     exploit that the combo LABEL is known and strikes are loud & sensor-specific:
 

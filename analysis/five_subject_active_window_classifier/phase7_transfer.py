@@ -1,6 +1,6 @@
 """Phase 7 (a)/(b) — transfer to combo (fast action transitions).
 
-Purpose chain (plan §C2): the combo segmentation (anchor-first) was a means to an
+Purpose chain: the combo segmentation (anchor-first) was a means to an
 end — turn combos into per-action windows and use them to test/strengthen the
 classifier on FAST action transitions. This script measures:
 
