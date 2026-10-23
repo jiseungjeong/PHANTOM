@@ -175,7 +175,12 @@ recording protocol and file naming.
 
 ## Team
 
-starTrack (UNIST): Kim Geonho, Park Jiho, Son Juho, Jeong Jiseung
+starTrack (UNIST)
+
+- Geonho Kim ([@geonhokim1](https://github.com/geonhokim1))
+- Jiho Park ([@batiger00](https://github.com/batiger00))
+- Jooho Sohn ([@SON20615](https://github.com/SON20615))
+- Jiseung Jeong ([@jiseungjeong](https://github.com/jiseungjeong))
 
 ## License
 
