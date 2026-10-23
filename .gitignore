@@ -84,6 +84,8 @@ analysis/**/__pycache__/
 *.gif
 *.mov
 *.mp4
+# Exception: compressed README demo
+!docs/images/*.gif
 # Logo source at root is redundant (the app icon lives in iOS/Assets.xcassets/AppIcon)
 /app-logo.png
 

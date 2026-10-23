@@ -1,6 +1,12 @@
-# PHANTOM
+<p align="center">
+  <img src="docs/images/phantom-logo.png" width="420" alt="PHANTOM">
+</p>
 
-**P**unch & **H**ead **A**ction · **N**etworked **T**racking · **O**mni-device **M**otion sensing
+<p align="center">
+  <b>P</b>unch &amp; <b>H</b>ead <b>A</b>ction · <b>N</b>etworked <b>T</b>racking · <b>O</b>mni-device <b>M</b>otion sensing
+</p>
+
+<img src="docs/images/calibration-demo.gif" width="260" align="right" alt="On-device calibration demo">
 
 PHANTOM tracks both offense and defense during shadowboxing with three devices you
 already own: an Apple Watch on the lead wrist, an iPhone in the rear hand, and AirPods Pro
@@ -23,6 +29,18 @@ rolls and works anywhere.
   on-device training.
 - **Transition Time:** measures how fast the boxer switches from attacking to defending.
 
+<br clear="right">
+
+## Dataset
+
+![The five action types](docs/images/actions.png)
+
+Five subjects recorded every action with all three devices. Each single-action recording
+starts with a sync jump followed by 5 repetitions, and the fused IMU magnitude is cut into
+one window per peak. Combination recordings (e.g. Lead Jab, Left Slip, Rear Hook) were
+collected to test fast transitions. 1,251 windows in total. The raw data is not included
+in this repository.
+
 ## Results
 
 Evaluated on 5 subjects, 10 classes, macro-F1.
@@ -38,6 +56,11 @@ taken from separate files:
 | Calibration demos per action | 0 | 1 | 5 |
 |---|---|---|---|
 | Unseen-person macro-F1 | 0.61 | 0.91 | 0.95 |
+
+![Confusion matrix before and after calibration](analysis/five_subject_active_window_classifier/figures/calibration_confusion.png)
+
+Without calibration, most errors are hook vs. uppercut on the same hand and left vs. right
+defenses. One demo per action removes most of them.
 
 <p align="center">
   <img src="analysis/five_subject_active_window_classifier/figures/calibration_curve.png" width="48%" alt="Calibration curve">
@@ -63,6 +86,11 @@ base model generalize better.
 
 ## How it works
 
+![Pipeline from three devices to one action label](docs/images/pipeline.png)
+
+<details>
+<summary>Pipeline as text</summary>
+
 ```
 Apple Watch (lead wrist) ──WCSession──┐
 iPhone      (rear hand)  ─────────────┼──> session-relative timeline on iPhone
@@ -82,6 +110,8 @@ AirPods Pro (head)       ─────────────┘
                                         │
                      action label, or reject (idle / none)
 ```
+
+</details>
 
 The Python analysis pipeline trains and evaluates the model, then exports the reference
 set to `iOS/Resources/knn_params.json`. `MotionRuleClassifier.swift` re-implements the
